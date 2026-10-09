@@ -1,6 +1,4 @@
 fastapi
 uvicorn[standard]
-httpx
-pydantic
-sqlalchemy
-pymysql
+pyTelegramBotAPI
+requests
