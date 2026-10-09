@@ -38,8 +38,8 @@ REQUIRED_CHANNELS = [
     },
     {
         "id": -1003731592787,
-        "link": "https://t.me/kurdishgroup1",
-        "name": "Kurdistan #bilindbûn"
+        "link": "https://t.me/hollandadiriliss",
+        "name": "𝐇𝐨𝐥𝐥𝐚𝐧𝐝𝐚 #Dirilis"
     }
 ]
 
