@@ -18,10 +18,8 @@ import uvicorn
 
 BOT_TOKEN = "8935278587:AAFfwr3wg73ln55fIiBmgWxLiDhhvUn1xvw"
 
-# 👑 OWNER ID (Ana Admin - Silinemez)
 OWNER_ID = 8913966694 
 
-# 🔴 YÖNETİCİLERİN ID LİSTESİ ve SEVİYELERİ
 ADMIN_LEVELS = {
     "8913966694": "owner",
 }
@@ -29,7 +27,7 @@ ADMIN_LEVELS = {
 ADMIN_IDS = [8913966694]
 
 STATUS_CHANNELS = [
-    -1003941046835  # Logs kanalı
+    -1003941046835
 ]
 
 REQUIRED_CHANNELS = [
@@ -52,15 +50,11 @@ DB_FILE = "sms_panel_v7.json"
 
 user_msg_times = {}
 
-
-# ============================================================
-# 📦 VARSAYILAN ÜRÜNLER (BOŞ - ADMIN EKLEYECEK)
-# ============================================================
 default_products = {}
 
 
 # ============================================================
-# 💾 VERİTABANI MOTORU (LOAD DATABASE)
+# 💾 VERİTABANI MOTORU
 # ============================================================
 def load_database():
     if not os.path.exists(DB_FILE):
@@ -88,12 +82,7 @@ def load_database():
             data["categories"] = {
                 "genel": {"name": " Genel Ürünler", "emoji_id": "6129402906782207599", "color": "primary"}
             }
-        else:
-            eklenecekler = {}
-            for k_id, k_verisi in eklenecekler.items():
-                if k_id not in data["categories"]:
-                    data["categories"][k_id] = k_verisi
-
+                
         for cid, cdata in list(data["categories"].items()):
             if isinstance(cdata, str):
                 data["categories"][cid] = {
@@ -253,6 +242,11 @@ def is_super_admin(uid):
 def is_admin(uid):
     return get_admin_level(uid) is not None
 
+def notify_admins(text):
+    for admin in ADMIN_IDS:
+        try: bot.send_message(admin, text)
+        except: pass
+
 def notify_admins_with_markup(text, markup):
     for admin in ADMIN_IDS:
         try: bot.send_message(admin, text, reply_markup=markup)
@@ -269,36 +263,32 @@ def notify_everyone(status_msg):
             bot.send_message(int(user_id), status_msg)
             time.sleep(0.1) 
         except: pass
-        
 
-def create_colored_button(text: str, callback_data: str = None, color: str = "primary", url: str = None):
-    style_map = {
-        "blue": "primary",
-        "green": "success",
-        "red": "danger",
-        "primary": "primary",
-        "success": "success",
-        "danger": "danger",
-    }
-
-    button_style = style_map.get(color)
-
-    kwargs = {}
-    if callback_data:
-        kwargs["callback_data"] = callback_data
-    if url:
-        kwargs["url"] = url
-
-    try:
-        if button_style:
-            return InlineKeyboardButton(text, style=button_style, **kwargs)
-    except TypeError:
-        pass
-
-    return InlineKeyboardButton(text, **kwargs)
 
 # ============================================================
-# 🎬 HAREKETLİ ANİMASYON FONKSİYONLARI (PREMIUM GÖRÜNÜM)
+# 🔌 GLOBAL PREMIUM BUTON FONKSİYONU (DÜZELTİLMİŞ)
+# ============================================================
+def pbtn(text, callback_data=None, emoji_id=None, url=None, style=None):
+    kwargs = {"text": text}
+    if url:
+        kwargs["url"] = url
+    else:
+        kwargs["callback_data"] = callback_data
+    if style:
+        kwargs["style"] = style
+    if emoji_id:
+        kwargs["icon_custom_emoji_id"] = emoji_id
+    try:
+        return types.InlineKeyboardButton(**kwargs)
+    except TypeError:
+        # Eski sürüm fallback
+        kwargs.pop("style", None)
+        kwargs.pop("icon_custom_emoji_id", None)
+        return types.InlineKeyboardButton(**kwargs)
+
+
+# ============================================================
+# 🎬 HAREKETLİ ANİMASYON FONKSİYONLARI
 # ============================================================
 def animated_loading(chat_id, final_text, markup=None):
     msg = bot.send_message(chat_id, "<tg-emoji emoji-id=\"6235771761892270039\">🔼</tg-emoji> <i>Sistem başlatılıyor...</i>")
@@ -318,31 +308,7 @@ def animated_loading(chat_id, final_text, markup=None):
 
 
 # ============================================================
-# 🔌 GLOBAL PREMIUM BUTON FONKSİYONU
-# ============================================================
-def pbtn(text, callback_data=None, emoji_id=None, url=None, style=None):
-    if url:
-        btn = types.InlineKeyboardButton(text=text, url=url)
-    else:
-        btn = types.InlineKeyboardButton(text=text, callback_data=callback_data)
-    
-    try:
-        if style:
-            btn.style = style
-    except:
-        pass
-        
-    try:
-        if emoji_id:
-            btn.icon_custom_emoji_id = emoji_id
-    except:
-        pass
-        
-    return btn
-
-
-# ============================================================
-# 📱 KULLANICI ANA MENÜSÜ (MAIN KEYBOARD)
+# 📱 KULLANICI ANA MENÜSÜ
 # ============================================================
 def get_main_keyboard(uid):
     try:
@@ -448,7 +414,7 @@ def get_main_keyboard(uid):
     
 
 # ==========================================
-# 👑 YÖNETİCİ PANELİ MENÜSÜ (ADMIN KEYBOARD)
+# 👑 YÖNETİCİ PANELİ MENÜSÜ
 # ==========================================
 def get_admin_keyboard():
     markup = types.InlineKeyboardMarkup()
@@ -527,7 +493,7 @@ def get_admin_keyboard():
 
 
 # ==========================================
-# 🌐 DİL SEÇİM MENÜSÜ (LANGUAGE KEYBOARD)
+# 🌐 DİL SEÇİM MENÜSÜ
 # ==========================================
 def get_language_keyboard():
     markup = types.InlineKeyboardMarkup()
@@ -541,10 +507,10 @@ def get_language_keyboard():
     )
     
     return markup
-    
+
 
 # ============================================================
-# 🕹️ CALLBACK HANDLER (ANA MOTOR & ADMIN SISTEMLERI)
+# 🕹️ CALLBACK HANDLER
 # ============================================================
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -566,9 +532,7 @@ def process_callbacks(call):
         return
 
     if call.data == "check_channels":
-        import time
         time.sleep(0.5)
-        
         try:
             üye = is_member_of_channels(call.from_user.id)
         except Exception as e:
@@ -577,20 +541,12 @@ def process_callbacks(call):
             
         if üye:
             db["users"][uid]["status"] = "active"
-            
             ref_id = db["users"].get(uid, {}).get("pending_ref")
-            if not ref_id and "pending_ref" in db:
-                ref_id = db["pending_ref"].get(uid) or db["pending_ref"].get(int(uid))
 
             if ref_id:
                 award_referral(uid, ref_id)
-                
                 if "pending_ref" in db["users"].get(uid, {}):
                     db["users"][uid].pop("pending_ref", None)
-                if "pending_ref" in db and uid in db["pending_ref"]:
-                    db["pending_ref"].pop(uid, None)
-                if "pending_ref" in db and int(uid) in db["pending_ref"]:
-                    db["pending_ref"].pop(int(uid), None)
                     
             save_database(db)
                 
@@ -600,7 +556,7 @@ def process_callbacks(call):
             except:
                 bot.send_message(chat_id, f"<tg-emoji emoji-id=\"6237621131860253190\">✅</tg-emoji> <b>Doğrulama Başarılı!</b>\n\n{txts['welcome']}", reply_markup=kb)
         else:
-            bot.answer_callback_query(call.id, "⚠️ Henüz kanalların hepsine katılmadın ya da sistem üyeliğini algılayamadı!", show_alert=True)
+            bot.answer_callback_query(call.id, "⚠️ Henüz kanalların hepsine katılmadın!", show_alert=True)
         return
         
 
@@ -629,19 +585,20 @@ def process_callbacks(call):
             if REQUIRED_CHANNELS and not is_member_of_channels(call.from_user.id):
                 db["users"][uid]["pending_ref"] = ref_id
                 save_database(db)
-                bot.send_message(chat_id, "<tg-emoji emoji-id=\"5780405967527089720\">📢</tg-emoji> <b>Bota erişmek için kanallara katılman gerekiyor! <tg-emoji emoji-id=\"5780405967527089720\">📢</tg-emoji></b>", reply_markup=get_channel_join_keyboard())
+                bot.send_message(chat_id, "<tg-emoji emoji-id=\"5780405967527089720\">📢</tg-emoji> <b>Bota erişmek için kanallara katılman gerekiyor!</b>", reply_markup=get_channel_join_keyboard())
                 return
             
             if ref_id:
                 award_referral(uid, ref_id)
             kb, txts = get_main_keyboard(uid)
-            bot.send_message(chat_id, f"<tg-emoji emoji-id=\"6287474217424263219\">🎉</tg-emoji> <b>Doğrulama Başarılı! <tg-emoji emoji-id=\"6287474217424263219\">🎉</tg-emoji></b>\n\n{txts['welcome']}", reply_markup=kb)
+            bot.send_message(chat_id, f"<tg-emoji emoji-id=\"6287474217424263219\">🎉</tg-emoji> <b>Doğrulama Başarılı!</b>\n\n{txts['welcome']}", reply_markup=kb)
         else:
             bot.answer_callback_query(call.id, "❌ Yanlış! Tekrar dene.", show_alert=True)
             try: bot.delete_message(chat_id, call.message.message_id)
             except: pass
             send_math_captcha(chat_id, uid, ref_id)
         return
+
     if call.data == "nav_main":
         kb, txts = get_main_keyboard(uid)
         try:
@@ -654,14 +611,13 @@ def process_callbacks(call):
     if call.data == "nav_profile":
         u = db["users"][uid]
         is_vip = u.get("is_vip", False)
-        vip_badge = " '<tg-emoji emoji-id=\"6266995104687330978\">👍</tg-emoji>' <b>VIP</b>" if is_vip else ""
+        vip_badge = " <b>VIP</b>" if is_vip else ""
         txt = (f"<tg-emoji emoji-id=\"5348136664738839786\">👤</tg-emoji> <b>Profil Özeti</b>{vip_badge}\n\n"
                f"<tg-emoji emoji-id=\"5974526806995242353\">🆔</tg-emoji> <b>Kullanıcı ID:</b> <code>{uid}</code>\n"
                f"<tg-emoji emoji-id=\"5251562950698759162\">💎</tg-emoji> <b>Cüzdan Bakiyesi:</b> {u['balance']} Puan\n"
                f"<tg-emoji emoji-id=\"6034834452843074121\">🤝</tg-emoji> <b>Davet Edilen:</b> {u['refs']} Kişi\n"
                f"<tg-emoji emoji-id=\"5348227245599105972\">💼</tg-emoji> <b>Toplam Sipariş:</b> {u['orders_count']}\n"
-               f"<tg-emoji emoji-id=\"5028418466000930064\">📆</tg-emoji> <b>Kayıt Tarihi:</b> {u['reg_date'][:16]}\n\n"
-               f"{'<tg-emoji emoji-id=\"6005862519019673214\">👑</tg-emoji> <b>VIP Avantajları:</b> Günde 2x Bonus | +2 Davet Puanı | VIP Mağaza' if is_vip else '💡 VIP olarak: 2x Günlük Bonus, +2 Davet Puanı, VIP Mağazaya erişim!'}")
+               f"<tg-emoji emoji-id=\"5028418466000930064\">📆</tg-emoji> <b>Kayıt Tarihi:</b> {u['reg_date'][:16]}")
         
         markup = InlineKeyboardMarkup()
         markup.row(pbtn(" Günlük Bonus Al", "nav_daily_bonus", emoji_id="5251562950698759162", style="success"))
@@ -683,8 +639,7 @@ def process_callbacks(call):
         max_claims = 2 if is_vip else 1
 
         if last_date == today and daily_count >= max_claims:
-            remaining = "Yarın tekrar gel!"
-            bot.answer_callback_query(call.id, f"⏳ Bugünkü bonus hakkını kullandın! {remaining}", show_alert=True)
+            bot.answer_callback_query(call.id, "⏳ Bugünkü bonus hakkını kullandın! Yarın tekrar gel!", show_alert=True)
             return
 
         db["users"][uid]["balance"] += 1
@@ -697,7 +652,7 @@ def process_callbacks(call):
 
         new_bal = db["users"][uid]["balance"]
         kalan = max_claims - db["users"][uid]["daily_bonus_count"]
-        extra = f"\n'<tg-emoji emoji-id=\"6120660741369369103\">👍</tg-emoji>' Bugün için <b>{kalan} hakkın</b> daha var!" if kalan > 0 else "\n'<tg-emoji emoji-id=\"6120660741369369103\">👍</tg-emoji>' Bugünkü tüm bonus haklarını kullandın!"
+        extra = f"\nBugün için <b>{kalan} hakkın</b> daha var!" if kalan > 0 else "\nBugünkü tüm bonus haklarını kullandın!"
         vip_note = " <b>(VIP Avantajı: Günde 2x!)</b>" if is_vip else ""
 
         txt = (f" <b>Günlük Bonus Alındı!{vip_note}</b>\n\n"
@@ -763,7 +718,7 @@ def process_callbacks(call):
             bot.answer_callback_query(call.id, "⚠️ Sipariş bulunamadı!", show_alert=True)
             return
         o = orders[oid]
-        durum_emoji = {"alindi": "<tg-emoji emoji-id=\"6035130900075777681\">🚪</tg-emoji>", "islemde": "<tg-emoji emoji-id=\"5981091707456851997\">⏳</tg-emoji>", "teslim": "<tg-emoji emoji-id=\"5462919317832082236\">⏳</tg-emoji>", "iptal": "<tg-emoji emoji-id=\"5463260230861202209\">🚪</tg-emoji>"}
+        durum_emoji = {"alindi": "🟡", "islemde": "🔵", "teslim": "🟢", "iptal": "🟥"}
         durum_yazi = {"alindi": "Sipariş Alındı", "islemde": "İşleme Alındı", "teslim": "Teslim Edildi", "iptal": "İptal Edildi"}
         d = o.get("durum", "alindi")
         txt = (f"<tg-emoji emoji-id=\"5909003528956812070\">📦</tg-emoji> <b>Sipariş Detayı</b>\n\n"
@@ -771,13 +726,7 @@ def process_callbacks(call):
                f"<tg-emoji emoji-id=\"4970023558068568720\">🛍️</tg-emoji> <b>Ürün:</b> {o.get('urun', '-')}\n"
                f"<tg-emoji emoji-id=\"5891105528356018797\">💎</tg-emoji> <b>Ödenen:</b> {o.get('fiyat', 0)} Puan\n"
                f"<tg-emoji emoji-id=\"5030732809128379408\">🗓</tg-emoji> <b>Tarih:</b> {o.get('tarih', '-')}\n\n"
-               f"<b>Durum İzleme:</b>\n"
-               f"{'<tg-emoji emoji-id=\"6041720006973067267\">👍</tg-emoji>' if d in ['alindi','islemde','teslim'] else '<tg-emoji emoji-id=\"5778479949572738874\">↔️</tg-emoji>'} Sipariş Alındı\n"
-               f"{'<tg-emoji emoji-id=\"6041720006973067267\">👍</tg-emoji>' if d in ['islemde','teslim'] else '<tg-emoji emoji-id=\"5778479949572738874\">↔️</tg-emoji>'} İşleme Alındı\n"
-               f"{'<tg-emoji emoji-id=\"6041720006973067267\">👍</tg-emoji>' if d == 'teslim' else '<tg-emoji emoji-id=\"5778479949572738874\">↔️</tg-emoji>'} Teslim Edildi\n"
-               f"\n<b>Güncel Durum:</b> {durum_emoji.get(d,'🟡')} <b>{durum_yazi.get(d,'Alındı')}</b>")
-        if d == "iptal":
-            txt += f"\n\n'<tg-emoji emoji-id=\"6120660741369369103\">👍</tg-emoji>' <i>Bu sipariş iptal edildi, puan iade edildi.</i>"
+               f"<b>Güncel Durum:</b> {durum_emoji.get(d,'🟡')} <b>{durum_yazi.get(d,'Alındı')}</b>")
         if o.get("not"):
             txt += f"\n\n📝 <b>Not:</b> <code>{o['not']}</code>"
         kb = InlineKeyboardMarkup()
@@ -814,9 +763,7 @@ def process_callbacks(call):
     if call.data == "nav_vip_shopping":
         is_vip = db["users"].get(uid, {}).get("is_vip", False)
         if not is_vip:
-            bot.answer_callback_query(call.id,
-                "👑 Lütfen önce VIP olun!\nVIP mağazaya erişmek için VIP üyeliğiniz gerekiyor.",
-                show_alert=True)
+            bot.answer_callback_query(call.id, "👑 Lütfen önce VIP olun!", show_alert=True)
             return
         categories = db.get("vip_categories", db.get("categories", {"genel": "Genel"}))
         m = InlineKeyboardMarkup()
@@ -833,9 +780,9 @@ def process_callbacks(call):
             m.row(*row_buttons)
         m.row(pbtn(" Ana Merkeze Dön", "nav_main", emoji_id="5253997076169115797", style="danger"))
         try:
-            bot.edit_message_text("👑 <b>VIP Mağazaya Hoşgeldiniz!</b>\n\nÖzel VIP ürünler sizi bekliyor! Bir kategori seçin:", chat_id, call.message.message_id, reply_markup=m)
+            bot.edit_message_text("👑 <b>VIP Mağazaya Hoşgeldiniz!</b>\n\nBir kategori seçin:", chat_id, call.message.message_id, reply_markup=m)
         except:
-            bot.send_message(chat_id, "👑 <b>VIP Mağazaya Hoşgeldiniz!</b>\n\nÖzel VIP ürünler sizi bekliyor! Bir kategori seçin:", reply_markup=m)
+            bot.send_message(chat_id, "👑 <b>VIP Mağazaya Hoşgeldiniz!</b>\n\nBir kategori seçin:", reply_markup=m)
         bot.answer_callback_query(call.id)
         return
 
@@ -854,17 +801,15 @@ def process_callbacks(call):
         m.row(pbtn(" Ana Merkeze Dön", "nav_main", emoji_id="5253997076169115797", style="danger"))
         if refs >= VIP_REF_REQUIRED:
             txt = ("👑 <b>Tebrikler! VIP için yeterli referansınız var!</b>\n\n"
-                   f"'<tg-emoji emoji-id=\"5231200819986047254\">👍</tg-emoji>' Referans sayınız: <b>{refs}/{VIP_REF_REQUIRED}</b>\n\n"
-                   "Aşağıdaki butona basarak VIP'i aktif edebilirsiniz!")
+                   f"Referans sayınız: <b>{refs}/{VIP_REF_REQUIRED}</b>")
         else:
-            txt = ("'<tg-emoji emoji-id=\"6267068789146260253\">👍</tg-emoji>' <b>VIP Satın Al</b>\n\n"
+            txt = (f"<b>VIP Satın Al</b>\n\n"
                    f"VIP olmak için <b>{VIP_REF_REQUIRED} referans</b> şart!\n\n"
-                   f"'<tg-emoji emoji-id=\"5231200819986047254\">👍</tg-emoji>' Mevcut referansınız: <b>{refs}/{VIP_REF_REQUIRED}</b>\n"
-                   f"'<tg-emoji emoji-id=\"6120660741369369103\">👍</tg-emoji>' Eksik referans: <b>{kalan} kişi daha davet edin!</b>\n\n"
-                   "• '<tg-emoji emoji-id=\"6120625823285251747\">👍</tg-emoji>' <b>VIP Avantajları:</b>\n"
-                   "• '<tg-emoji emoji-id=\"6120625823285251747\">👍</tg-emoji>' VIP Mağazaya erişim\n"
-                   "• '<tg-emoji emoji-id=\"6120625823285251747\">👍</tg-emoji>' Günde <b>2 kez</b> günlük bonus\n"
-                   "• '<tg-emoji emoji-id=\"6120625823285251747\">👍</tg-emoji>' Her davette <b>+2 Puan</b>")
+                   f"Mevcut referansınız: <b>{refs}/{VIP_REF_REQUIRED}</b>\n"
+                   f"Eksik referans: <b>{kalan} kişi daha davet edin!</b>\n\n"
+                   "• VIP Mağazaya erişim\n"
+                   "• Günde <b>2 kez</b> günlük bonus\n"
+                   "• Her davette <b>+2 Puan</b>")
         try:
             bot.edit_message_text(txt, chat_id, call.message.message_id, reply_markup=m)
         except:
@@ -888,18 +833,17 @@ def process_callbacks(call):
         m = InlineKeyboardMarkup()
         m.row(pbtn(" VIP Mağazaya Git", "nav_vip_shopping", emoji_id="6266995104687330978", style="success"))
         m.row(pbtn(" Ana Merkeze Dön", "nav_main", emoji_id="5253997076169115797", style="danger"))
-        txt = ("'<tg-emoji emoji-id=\"6266995104687330978\">👍</tg-emoji>' <b>VIP üyeliğiniz aktif edildi! Tebrikler!</b>\n\n"
-               "'<tg-emoji emoji-id=\"6120625823285251747\">👍</tg-emoji>' <b>Kazandığınız Avantajlar:</b>\n"
-               "• '<tg-emoji emoji-id=\"6266995104687330978\">👍</tg-emoji>' VIP Mağazaya erişim açıldı\n"
-               "• '<tg-emoji emoji-id=\"6120625823285251747\">👍</tg-emoji>' Günde <b>2 kez</b> günlük bonus\n"
-               "• '<tg-emoji emoji-id=\"6120625823285251747\">👍</tg-emoji>' Her davette <b>+2 Puan</b>\n\n"
-               "<i>İyi kullanmalar! '<tg-emoji emoji-id=\"6289727022260294842\">👍</tg-emoji>'</i>")
+        txt = ("<b>VIP üyeliğiniz aktif edildi! Tebrikler!</b>\n\n"
+               "<b>Kazandığınız Avantajlar:</b>\n"
+               "• VIP Mağazaya erişim açıldı\n"
+               "• Günde <b>2 kez</b> günlük bonus\n"
+               "• Her davette <b>+2 Puan</b>")
         try:
             bot.edit_message_text(txt, chat_id, call.message.message_id, reply_markup=m)
         except:
             bot.send_message(chat_id, txt, reply_markup=m)
         for admin_id in ADMIN_IDS:
-            try: bot.send_message(admin_id, f"'<tg-emoji emoji-id=\"6266995104687330978\">👍</tg-emoji>' <b>Yeni VIP Üye!</b>\nKullanıcı ID: <code>{uid}</code>\nReferans: {refs}")
+            try: bot.send_message(admin_id, f"<b>Yeni VIP Üye!</b>\nKullanıcı ID: <code>{uid}</code>\nReferans: {refs}")
             except: pass
         bot.answer_callback_query(call.id)
         return
@@ -919,7 +863,7 @@ def process_callbacks(call):
                 else:
                     m.row(pbtn(f"{p_val['name']} (Tükenmiş)", "stock_empty", emoji_id="5314504236132747481", style="danger"))
         m.row(pbtn(" Kategorilere Dön", "nav_shopping", emoji_id="5253997076169115797", style="danger"))
-        txt = "'<tg-emoji emoji-id=\"6266995104687330978\">👍</tg-emoji>' <b>Ürünler Listeleniyor</b>\n\nSatın almak istediğiniz ürünü seçin:" if has_product else "⚠️ <b>Bu kategoride ürün bulunamadı!</b>"
+        txt = "<b>Ürünler Listeleniyor</b>\n\nSatın almak istediğiniz ürünü seçin:" if has_product else "⚠️ <b>Bu kategoride ürün bulunamadı!</b>"
         try:
             bot.edit_message_text(txt, chat_id, call.message.message_id, reply_markup=m)
         except:
@@ -946,7 +890,7 @@ def process_callbacks(call):
                 else:
                     m.row(pbtn(f"{p_val['name']} (Tükenmiş)", "stock_empty", emoji_id="5314504236132747481", style="danger"))
         m.row(pbtn(" VIP Kategorilere Dön", "nav_vip_shopping", emoji_id="5253997076169115797", style="danger"))
-        txt = "'<tg-emoji emoji-id=\"6266995104687330978\">👍</tg-emoji>' <b>VIP Ürünler Listeleniyor</b>\n\nSatın almak istediğiniz ürünü seçin:" if has_product else "⚠️ <b>Bu VIP kategorisinde henüz ürün yok!</b>"
+        txt = "<b>VIP Ürünler Listeleniyor</b>\n\nSatın almak istediğiniz ürünü seçin:" if has_product else "⚠️ <b>Bu VIP kategorisinde henüz ürün yok!</b>"
         try:
             bot.edit_message_text(txt, chat_id, call.message.message_id, reply_markup=m)
         except:
@@ -987,14 +931,12 @@ def process_callbacks(call):
             bot.answer_callback_query(call.id, "⚠️ Ürün bulunamadı!", show_alert=True)
             return
             
-        prod_emoji = product.get("emoji_id", "5373251851074415873")
-        prod_color = product.get("color", "success")
         stock = product.get("stock", 0)
         
         txt = (f"<b>{product['name']}</b>\n\n"
                f"<tg-emoji emoji-id=\"5152608171214243098\">💵</tg-emoji> <b>Fiyat:</b> {product['price']} Puan\n"
                f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>Stok:</b> {stock} Adet\n\n"
-               f"<i><tg-emoji emoji-id=\"5780742388020419424\">⁉️</tg-emoji> Satın almak istiyorsunuz <tg-emoji emoji-id=\"5780742388020419424\">⁉️</tg-emoji></i>")
+               f"<i>Satın almak istiyor musunuz?</i>")
         
         m = InlineKeyboardMarkup()
         m.row(
@@ -1029,7 +971,7 @@ def process_callbacks(call):
         item = p_key
         
         if db["users"][uid]["balance"] < cost:
-            bot.send_message(chat_id, f"<tg-emoji emoji-id=\"5348514879558926674\">👎</tg-emoji> <b>Yetersiz Bakiye!</b>\n{cost} puana ihtiyacınız var.")
+            bot.send_message(chat_id, f"<b>Yetersiz Bakiye!</b>\n{cost} puana ihtiyacınız var.")
             return
         
         order_id = "".join(random.choices(string.digits, k=6))
@@ -1046,16 +988,16 @@ def process_callbacks(call):
             "durum": "alindi",
             "urun_key": item
         }
-        db["users"][uid].setdefault("order_history", []).insert(0, f"[{date_str}] #{order_id} {item_name} (-{cost}<tg-emoji emoji-id=\"6325717349257187998\">💎</tg-emoji>)")
+        db["users"][uid].setdefault("order_history", []).insert(0, f"[{date_str}] #{order_id} {item_name} (-{cost}💎)")
         save_database(db)
         
         buyer_name = call.from_user.first_name or "Bilinmeyen"
         buyer_uname = f" (@{call.from_user.username})" if call.from_user.username else ""
-        final_msg = (f"<tg-emoji emoji-id=\"5350572310627632617\">✅</tg-emoji> <b>Siparişiniz Alındı!</b>\n\n"
-                     f"<tg-emoji emoji-id=\"6287264550005773857\">🔖</tg-emoji> <b>Sipariş ID:</b> <code>#{order_id}</code>\n"
-                     f"<tg-emoji emoji-id=\"5348227245599105972\">💼</tg-emoji> <b>Ürün:</b> {item_name}\n"
-                     f"<tg-emoji emoji-id=\"6325717349257187998\">💎</tg-emoji> <b>Ödenen:</b> {cost} Puan\n\n"
-                     f"<tg-emoji emoji-id=\"5251684060186569219\">🔔</tg-emoji> <b>Önemli:</b> Siparişinizin işleme alınabilmesi için\n"
+        final_msg = (f"<b>Siparişiniz Alındı!</b>\n\n"
+                     f"<b>Sipariş ID:</b> <code>#{order_id}</code>\n"
+                     f"<b>Ürün:</b> {item_name}\n"
+                     f"<b>Ödenen:</b> {cost} Puan\n\n"
+                     f"<b>Önemli:</b> Siparişinizin işleme alınabilmesi için\n"
                      f"lütfen <b>sipariş bağlantınızı / profilinizi</b> aşağıya gönderin.\n\n"
                      f"<i>Örn: https://t.me/kullaniciadiniz</i>")
 
@@ -1065,53 +1007,38 @@ def process_callbacks(call):
             def _step(m2):
                 link = m2.text.strip() if m2.text else "(gönderilmedi)"
                 if link.lower() == "/iptal":
-                    bot.send_message(chat_id_, "<tg-emoji emoji-id=\"6221914376329237010\">⚠️</tg-emoji> İptal edildi.")
+                    bot.send_message(chat_id_, "⚠️ İptal edildi.")
                     return
                 if uid_ in db["users"] and order_id_ in db["users"][uid_].get("orders", {}):
                     db["users"][uid_]["orders"][order_id_]["link"] = link
                     save_database(db)
                 bot.send_message(chat_id_,
-                    f"<tg-emoji emoji-id=\"5350572310627632617\">✅</tg-emoji> <b>Link alındı!</b>\n"
-                    f"<tg-emoji emoji-id=\"6287264550005773857\">🔖</tg-emoji> Sipariş ID: <code>#{order_id_}</code>\n"
-                    f"<tg-emoji emoji-id=\"5981091707456851997\">⏳</tg-emoji> Siparişiniz en kısa sürede işleme alınacak."
+                    f"<b>Link alındı!</b>\n"
+                    f"Sipariş ID: <code>#{order_id_}</code>\n"
+                    f"⏳ Siparişiniz en kısa sürede işleme alınacak."
                 )
                 adm_markup = InlineKeyboardMarkup()
                 adm_markup.add(
-                    InlineKeyboardButton(f"<tg-emoji emoji-id=\"5350572310627632617\">✅</tg-emoji> TESLİM ET (#{order_id_})", callback_data=f"o_app_{uid_}_{item}_{order_id_}"),
-                    InlineKeyboardButton(f"<tg-emoji emoji-id=\"5314504236132747481\">❌</tg-emoji> İPTAL (#{order_id_})", callback_data=f"o_rej_{uid_}_{item}_{order_id_}")
+                    pbtn(f"✅ TESLİM ET (#{order_id_})", callback_data=f"o_app_{uid_}_{item}_{order_id_}", style="success"),
+                    pbtn(f"❌ İPTAL (#{order_id_})", callback_data=f"o_rej_{uid_}_{item}_{order_id_}", style="danger")
                 )
-                adm_markup.add(InlineKeyboardButton(f"<tg-emoji emoji-id=\"5956229471585441542\">🔵</tg-emoji> İŞLEME AL", callback_data=f"o_proc_{uid_}_{order_id_}"))
+                adm_markup.add(pbtn("🔵 İŞLEME AL", callback_data=f"o_proc_{uid_}_{order_id_}", style="primary"))
                 notify_admins_with_markup(
-                    f"<tg-emoji emoji-id=\"5348227245599105972\">💼</tg-emoji> <b>YENİ SİPARİŞ!</b>\n\n"
-                    f"<tg-emoji emoji-id=\"6287264550005773857\">🔖</tg-emoji> Sipariş ID: <code>#{order_id_}</code>\n"
-                    f"<tg-emoji emoji-id=\"6032994772321309200\">👤</tg-emoji> Kullanıcı: {buyer_name_}{buyer_uname_}\n"
-                    f"<tg-emoji emoji-id=\"6325655265504923619\">🆔</tg-emoji> ID: <code>{uid_}</code>\n"
-                    f"<tg-emoji emoji-id=\"6325717349257187998\">💎</tg-emoji> Ürün: <b>{item_name_}</b>\n"
-                    f"<tg-emoji emoji-id=\"6267068789146260253\">💰</tg-emoji> Fiyat: {cost_} Puan\n"
-                    f"<tg-emoji emoji-id=\"5780406047416174369\">🔗</tg-emoji> <b>Kullanıcı Linki:</b> {link}", adm_markup
+                    f"<b>YENİ SİPARİŞ!</b>\n\n"
+                    f"Sipariş ID: <code>#{order_id_}</code>\n"
+                    f"Kullanıcı: {buyer_name_}{buyer_uname_}\n"
+                    f"ID: <code>{uid_}</code>\n"
+                    f"Ürün: <b>{item_name_}</b>\n"
+                    f"Fiyat: {cost_} Puan\n"
+                    f"<b>Kullanıcı Linki:</b> {link}", adm_markup
                 )
-            import time as _time
-            _time.sleep(4)
+            time.sleep(4)
             try:
                 bot.register_next_step_handler_by_chat_id(chat_id_, _step)
             except:
                 pass
         threading.Thread(target=wait_for_order_link).start()
         
-        markup = InlineKeyboardMarkup()
-        markup.add(
-            InlineKeyboardButton(f"✅ TESLİM ET (#{order_id})", callback_data=f"o_app_{uid}_{item}_{order_id}"), 
-            InlineKeyboardButton(f"❌ İPTAL (#{order_id})", callback_data=f"o_rej_{uid}_{item}_{order_id}")
-        )
-        markup.add(InlineKeyboardButton("🔵 İŞLEME AL", callback_data=f"o_proc_{uid}_{order_id}"))
-        notify_admins_with_markup(
-            f"<tg-emoji emoji-id=\"5348227245599105972\">💼</tg-emoji> <b>YENİ SİPARİŞ!</b>\n\n"
-            f"<tg-emoji emoji-id=\"6287264550005773857\">🔖</tg-emoji> Sipariş ID: <code>#{order_id}</code>\n"
-            f"<tg-emoji emoji-id=\"6032994772321309200\">👤</tg-emoji> Kullanıcı: {buyer_name}{buyer_uname}\n"
-            f"<tg-emoji emoji-id=\"6325655265504923619\">🆔</tg-emoji> ID: <code>{uid}</code>\n"
-            f"<tg-emoji emoji-id=\"6325717349257187998\">💎</tg-emoji> Ürün: <b>{item_name}</b>\n"
-            f"<tg-emoji emoji-id=\"6267068789146260253\">💰</tg-emoji> Fiyat: {cost} Puan", markup
-        )
         bot.answer_callback_query(call.id)
         return
 
@@ -1129,9 +1056,9 @@ def process_callbacks(call):
             bot.answer_callback_query(call.id, "⚠️ VIP ürün bulunamadı!", show_alert=True)
             return
         stock = product.get("stock", 0)
-        txt = (f"'<tg-emoji emoji-id=\"6266995104687330978\">👍</tg-emoji>' <b>{product['name']}</b>\n\n"
-               f"'<tg-emoji emoji-id=\"6267068789146260253\">👍</tg-emoji>' <b>Fiyat:</b> {product['price']} Puan\n"
-               f"'<tg-emoji emoji-id=\"5242391348685859513\">👍</tg-emoji>' <b>Stok:</b> {stock} Adet\n\n"
+        txt = (f"<b>{product['name']}</b>\n\n"
+               f"<b>Fiyat:</b> {product['price']} Puan\n"
+               f"<b>Stok:</b> {stock} Adet\n\n"
                f"<i>Bu VIP özel bir üründür. Satın almak istiyor musunuz?</i>")
         m = InlineKeyboardMarkup()
         m.row(
@@ -1177,22 +1104,22 @@ def process_callbacks(call):
             "urun": item_name, "fiyat": cost, "tarih": date_str,
             "durum": "alindi", "urun_key": p_key, "vip_order": True
         }
-        db["users"][uid].setdefault("order_history", []).insert(0, f"[{date_str}] #{order_id} '<tg-emoji emoji-id=\"6266995104687330978\">👍</tg-emoji>'{item_name} (-{cost}'<tg-emoji emoji-id=\"6325717349257187998\">👍</tg-emoji>')")
+        db["users"][uid].setdefault("order_history", []).insert(0, f"[{date_str}] #{order_id} 👑{item_name} (-{cost}💎)")
         save_database(db)
         buyer_name = call.from_user.first_name or "Bilinmeyen"
         buyer_uname = f" (@{call.from_user.username})" if call.from_user.username else ""
-        final_msg = (f"'<tg-emoji emoji-id=\"6120635817674149717\">👍</tg-emoji>' <b>VIP Siparişiniz Alındı!</b>\n\n"
-                     f"'<tg-emoji emoji-id=\"6287264550005773857\">👍</tg-emoji>' <b>Sipariş ID:</b> <code>#{order_id}</code>\n"
-                     f"'<tg-emoji emoji-id=\"6266995104687330978\">👍</tg-emoji>' <b>Ürün:</b> {item_name}\n"
-                     f"'<tg-emoji emoji-id=\"6325717349257187998\">👍</tg-emoji>' <b>Ödenen:</b> {cost} Puan\n\n"
+        final_msg = (f"<b>VIP Siparişiniz Alındı!</b>\n\n"
+                     f"<b>Sipariş ID:</b> <code>#{order_id}</code>\n"
+                     f"<b>Ürün:</b> {item_name}\n"
+                     f"<b>Ödenen:</b> {cost} Puan\n\n"
                      f"<i>Siparişiniz işleme alınıyor.</i>")
         threading.Thread(target=animated_loading, args=(chat_id, final_msg)).start()
         markup = InlineKeyboardMarkup()
         markup.add(
-            InlineKeyboardButton(f" TESLİM ET (#{order_id})", callback_data=f"o_app_{uid}_{p_key}_{order_id}"),
-            InlineKeyboardButton(f" İPTAL (#{order_id})", callback_data=f"o_rej_{uid}_{p_key}_{order_id}")
+            pbtn(f" TESLİM ET (#{order_id})", callback_data=f"o_app_{uid}_{p_key}_{order_id}", style="success"),
+            pbtn(f" İPTAL (#{order_id})", callback_data=f"o_rej_{uid}_{p_key}_{order_id}", style="danger")
         )
-        markup.add(InlineKeyboardButton(" İŞLEME AL", callback_data=f"o_proc_{uid}_{order_id}"))
+        markup.add(pbtn(" İŞLEME AL", callback_data=f"o_proc_{uid}_{order_id}", style="primary"))
         notify_admins_with_markup(
             f"👑 <b>YENİ VIP SİPARİŞ!</b>\n\n"
             f"🔖 Sipariş ID: <code>#{order_id}</code>\n"
@@ -1208,10 +1135,6 @@ def process_callbacks(call):
         bot.answer_callback_query(call.id, "🔴 Bu ürün tükenmiş!", show_alert=True)
         return
 
-    if call.data.startswith("buy_shop_"):
-        bot.answer_callback_query(call.id, "ℹ️ Lütfen Evet/Hayır seçeneğini kullanın.", show_alert=True)
-        return
-
     if call.data.startswith("o_proc_"):
         if int(uid) not in ADMIN_IDS: return
         parts = call.data.split("_", 3)
@@ -1221,11 +1144,11 @@ def process_callbacks(call):
             db["users"][target_uid]["orders"][order_id]["durum"] = "islemde"
             save_database(db)
         try:
-            bot.edit_message_text(call.message.text + f"\n\n<tg-emoji emoji-id=\"5415896658665808854\">🔵</tg-emoji> <b>Durum: İŞLEME ALINDI</b>", chat_id, call.message.message_id)
+            bot.edit_message_text(call.message.text + f"\n\n🔵 <b>Durum: İŞLEME ALINDI</b>", chat_id, call.message.message_id)
         except: pass
-        try: bot.send_message(int(target_uid), f"<tg-emoji emoji-id=\"5415896658665808854\">🔵</tg-emoji> <b>Siparişiniz İşleme Alındı!</b>\n<tg-emoji emoji-id=\"6287264550005773857\">🔖</tg-emoji> Sipariş ID: <code>#{order_id}</code>\n\n<i>En kısa sürede teslim edilecektir.</i>")
+        try: bot.send_message(int(target_uid), f"🔵 <b>Siparişiniz İşleme Alındı!</b>\nSipariş ID: <code>#{order_id}</code>")
         except: pass
-        bot.answer_callback_query(call.id, "<tg-emoji emoji-id=\"5780834596673296534\">➕</tg-emoji> İşleme alındı", show_alert=True)
+        bot.answer_callback_query(call.id, "İşleme alındı", show_alert=True)
         return
 
     if call.data.startswith("o_app_"):
@@ -1262,77 +1185,56 @@ def process_callbacks(call):
             save_database(db)
             
         try:
-            bot.edit_message_text(call.message.text + f"\n\n<tg-emoji emoji-id=\"5463260230861202209\">🟥</tg-emoji> <b>Durum: {admin_name} Tarafından İPTAL EDİLDİ</b>", chat_id, call.message.message_id)
+            bot.edit_message_text(call.message.text + f"\n\n🟥 <b>Durum: {admin_name} Tarafından İPTAL EDİLDİ</b>", chat_id, call.message.message_id)
         except: pass
             
         try: 
-            bot.send_message(int(target_uid), f"<tg-emoji emoji-id=\"5463260230861202209\">🟥</tg-emoji> <b>Sipariş İptal Edildi!</b>\n🔖 Sipariş ID: <code>#{order_id}</code>\n<tg-emoji emoji-id=\"5348227245599105972\">💼</tg-emoji> Ürün: <b>{item_name}</b>\n<tg-emoji emoji-id=\"5251562950698759162\">💎</tg-emoji> <b>{cost} Puan</b> cüzdanınıza iade edildi.")
+            bot.send_message(int(target_uid), f"🟥 <b>Sipariş İptal Edildi!</b>\nSipariş ID: <code>#{order_id}</code>\nÜrün: <b>{item_name}</b>\n<b>{cost} Puan</b> cüzdanınıza iade edildi.")
         except: pass
         bot.answer_callback_query(call.id)
         return
-
 
     if call.data == "nav_referral":
         bot_user = bot.get_me().username
         link = f"https://t.me/{bot_user}?start={uid}"
         is_vip = db["users"].get(uid, {}).get("is_vip", False)
-        puan_txt = "<b>+2 Puan</b> (VIP Avantajı! '<tg-emoji emoji-id=\"6266995104687330978\">👍</tg-emoji>')" if is_vip else "<b>+1 Puan</b>"
+        puan_txt = "<b>+2 Puan</b> (VIP Avantajı!)" if is_vip else "<b>+1 Puan</b>"
         
         kb = InlineKeyboardMarkup()
-        kb.row(InlineKeyboardButton(" Ana Merkeze Dön", callback_data="nav_main"))
+        kb.row(pbtn(" Ana Merkeze Dön", "nav_main", style="danger"))
         
-        txt = (f"<tg-emoji emoji-id=\"6034834452843074121\">🤝</tg-emoji> <b>Davet Et, Kazan!</b>\n\n"
-               f"<tg-emoji emoji-id=\"6147439566107186310\">👇</tg-emoji> Aşağıdaki kişisel linkinizle arkadaşlarınızı sisteme davet edin, "
+        txt = (f"<b>Davet Et, Kazan!</b>\n\n"
+               f"Aşağıdaki kişisel linkinizle arkadaşlarınızı sisteme davet edin, "
                f"her yeni katılımda anında {puan_txt} kazanın.\n\n"
-               f"<tg-emoji emoji-id=\"6071278787947925866\">📋</tg-emoji> <b>Sizin Linkiniz:</b>\n<code>{link}</code>")
+               f"<b>Sizin Linkiniz:</b>\n<code>{link}</code>")
         try:
             bot.edit_message_text(txt, chat_id, call.message.message_id, reply_markup=kb)
         except:
             bot.send_message(chat_id, txt, reply_markup=kb)
         bot.answer_callback_query(call.id)
         return
-        
 
     elif call.data == "nav_redeem":
-        msg = bot.send_message(call.message.chat.id, "<tg-emoji emoji-id=\"5418010521309815154\">🎫</tg-emoji> <b>Promosyon/Kupon Kodunuzu Giriniz:</b>")
+        msg = bot.send_message(call.message.chat.id, "<b>Promosyon/Kupon Kodunuzu Giriniz:</b>")
         bot.register_next_step_handler(msg, lambda m: redeem_gift_code(m, uid))
 
     elif call.data == "nav_help":
         txt = (
-            "<tg-emoji emoji-id=\"5807488863064559221\">📖</tg-emoji> <b>YARDIM MERKEZİ</b> <tg-emoji emoji-id=\"5807488863064559221\">📖</tg-emoji>\n\n"
+            "<b>YARDIM MERKEZİ</b>\n\n"
             "━━━━━━━━━━━━━━━━━\n"
-            "<tg-emoji emoji-id=\"5350699789551935589\">🛍</tg-emoji> <b>Mağaza Nedir</b> <tg-emoji emoji-id=\"5780742388020419424\">⁉️</tg-emoji>\n"
-            "Botun ana satış alanıdır. Kategoriler halinde düzenlenmiş ürünleri buradan satın alabilirsiniz. "
-            "Bir ürüne tıklayınca fiyat ve stok bilgisi çıkar, satın al butonuna basınca puan düşülür ve siparişiniz oluşur.\n\n"
+            "<b>Mağaza Nedir</b>\n"
+            "Botun ana satış alanıdır. Kategoriler halinde düzenlenmiş ürünleri buradan satın alabilirsiniz.\n\n"
             "━━━━━━━━━━━━━━━━━\n"
-            "<tg-emoji emoji-id=\"6325717349257187998\">💎</tg-emoji> <b>Puan Nasıl Kazanılır</b> <tg-emoji emoji-id=\"5780742388020419424\">⁉️</tg-emoji>\n"
+            "<b>Puan Nasıl Kazanılır</b>\n"
             "• Davet linkinizle arkadaş getirince <b>+1 Puan</b>\n"
             "• Admin tarafından manuel puan yüklenmesiyle\n"
             "• Promosyon kodu kullanarak\n\n"
             "━━━━━━━━━━━━━━━━━\n"
-            "<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>Sipariş Takibi Nasıl Çalışır <tg-emoji emoji-id=\"5780742388020419424\">⁉️</tg-emoji></b>\n"
-            "Satın aldığınız her ürün için otomatik bir <b>Sipariş ID</b> oluşturulur.\n"
-            "<b>Sipariş Geçmişi</b> menüsünden siparişlerinizi görebilirsiniz.\n\n"
+            "<b>Sipariş Takibi</b>\n"
             "Sipariş durumları:\n"
-            "<tg-emoji emoji-id=\"5415803109983133508\">🟡</tg-emoji> <b>Alındı</b> — Siparişiniz sisteme kaydedildi\n"
-            "<tg-emoji emoji-id=\"5415896658665808854\">🔵</tg-emoji> <b>İşlemde</b> — Yönetici siparişinizi hazırlıyor\n"
-            "<tg-emoji emoji-id=\"5415722549281561774\">🟢</tg-emoji> <b>Teslim Edildi</b> — Ürün size iletildi\n"
-            "<tg-emoji emoji-id=\"5463260230861202209\">🟥</tg-emoji> <b>İptal</b> — Sipariş iptal edildi, puan iade edildi\n\n"
+            "🟡 <b>Alındı</b> | 🔵 <b>İşlemde</b> | 🟢 <b>Teslim Edildi</b> | 🟥 <b>İptal</b>\n\n"
             "━━━━━━━━━━━━━━━━━\n"
-            "<tg-emoji emoji-id=\"5418010521309815154\">🎫</tg-emoji> <b>Promosyon Kodu Nedir?</b> <tg-emoji emoji-id=\"5780742388020419424\">⁉️</tg-emoji>\n"
-            "Yönetici tarafından oluşturulan özel kodlardır. "
-            "Ana menüden <b>Promosyon Kodu</b> butonuna basarak kodunuzu girin ve puan kazanın. "
-            "Her kod sadece belirtilen kişi sayısınca kullanılabilir.\n\n"
-            "━━━━━━━━━━━━━━━━━\n"
-            "<tg-emoji emoji-id=\"6215452159945740230\">🤝</tg-emoji> <b>Davet Et Kazan Nedir</b> <tg-emoji emoji-id=\"5780742388020419424\">⁉️</tg-emoji>\n"
-            "Size özel davet linkinizi paylaşın. Linkinizle bota ilk kez giren ve kanallara katılan "
-            "her kişi için otomatik olarak <b>+1 Puan</b> kazanırsınız.\n\n"
-            "━━━━━━━━━━━━━━━━━\n"
-            "<tg-emoji emoji-id=\"5787517290907962993\">💸</tg-emoji> <b>Bakiye İadesi Nedir</b> <tg-emoji emoji-id=\"5780742388020419424\">⁉️</tg-emoji>\n"
-            "Hatalı sipariş veya sorun yaşarsanız ana menüden <b>Bakiye İadesi</b> butonuna basarak "
-            "yöneticiye talebinizi iletebilirsiniz.\n\n"
-            "━━━━━━━━━━━━━━━━━\n"
-            "<tg-emoji emoji-id=\"5780742388020419424\">⁉️</tg-emoji> <b>Destek İçin:</b> Admin butonu üzerinden ulaşabilirsiniz <tg-emoji emoji-id=\"5780742388020419424\">⁉️</tg-emoji>"
+            "<b>Destek İçin:</b> Admin butonu üzerinden ulaşabilirsiniz"
         )
         kb = InlineKeyboardMarkup()
         kb.row(pbtn(" Ana Merkeze Dön", "nav_main", emoji_id="5253997076169115797", style="danger"))
@@ -1342,53 +1244,13 @@ def process_callbacks(call):
             bot.send_message(call.message.chat.id, txt, reply_markup=kb)
         bot.answer_callback_query(call.id)
 
-    elif call.data == "nav_products_list":
-        products = db.get("products", {})
-        if not products:
-            txt = "📋 <b>Ürün Listesi</b>\n\nŞu an stokta ürün bulunmuyor."
-        else:
-            def stock_emoji(s):
-                if s == 0: return "❌"
-                elif s <= 3: return "🔴"
-                elif s <= 10: return "🟡"
-                else: return "🟢"
-            
-            kategoriler = {}
-            for pk, pdata in products.items():
-                cat = pdata.get("category", "genel")
-                kategoriler.setdefault(cat, []).append(pdata)
-            
-            cat_isimleri = db.get("categories", {})
-            txt = "📋 <b>Ürün Listesi</b>\n\n"
-            for cat_key, urunler in kategoriler.items():
-                cat_raw = cat_isimleri.get(cat_key, cat_key)
-                cat_isim = cat_raw["name"] if isinstance(cat_raw, dict) else cat_raw
-                txt += f"<b>{cat_isim}</b>\n"
-                for p in urunler:
-                    s = p.get("stock", 0)
-                    txt += f"{stock_emoji(s)} {p['name']} — <b>{p['price']}💎</b>\n"
-                txt += "\n"
-            txt += "🟢 Stoklu  🟡 Az Kaldı (≤10)  🔴 Son Stok (≤3)  ❌ Tükendi"
-        
-        kb = InlineKeyboardMarkup()
-        kb.row(pbtn(" Ana Merkeze Dön", "nav_main", emoji_id="5253997076169115797", style="danger"))
-        try:
-            bot.edit_message_text(txt, call.message.chat.id, call.message.message_id, reply_markup=kb)
-        except:
-            bot.send_message(call.message.chat.id, txt, reply_markup=kb)
-        bot.answer_callback_query(call.id)
-
     elif call.data == "nav_lang":
-        bot.edit_message_text("<tg-emoji emoji-id=\"5399898266265475100\">🌍</tg-emoji> Lütfen dil tercihinizi yapın:", call.message.chat.id, call.message.message_id, reply_markup=get_language_keyboard())
-
-    elif call.data == "nav_support":
-        msg = bot.send_message(call.message.chat.id, "<tg-emoji emoji-id=\"5251684060186569219\">🔔</tg-emoji> <b>7/24 VIP Destek Hattı</b>\n\nLütfen talebinizi detaylı olarak yazın:")
-        bot.register_next_step_handler(msg, send_support_message_step, uid)
+        bot.edit_message_text("🌍 Lütfen dil tercihinizi yapın:", call.message.chat.id, call.message.message_id, reply_markup=get_language_keyboard())
 
     elif call.data == "nav_refund":
         history = db["users"][uid].get("order_history", [])[:5]
         hist_txt = "Kayıtlarda harcama bulunamadı." if not history else "\n".join(history)
-        msg_text = f"<tg-emoji emoji-id=\"6086980694460861135\">💸</tg-emoji> <b>Bakiye İade Merkezi</b>\n\n<tg-emoji emoji-id=\"5251562950698759162\">💎</tg-emoji> <b>Mevcut Bakiyeniz:</b> {db['users'][uid]['balance']} Puan\n\n<tg-emoji emoji-id=\"5258477770735885832\">📄</tg-emoji> <b>Son İşlemleriniz:</b>\n<code>{hist_txt}</code>\n\nİade talep ettiğiniz işlemi yazınız:"
+        msg_text = f"<b>Bakiye İade Merkezi</b>\n\n<b>Mevcut Bakiyeniz:</b> {db['users'][uid]['balance']} Puan\n\n<b>Son İşlemleriniz:</b>\n<code>{hist_txt}</code>\n\nİade talep ettiğiniz işlemi yazınız:"
         msg = bot.send_message(call.message.chat.id, msg_text)
         bot.register_next_step_handler(msg, send_refund_message_step, uid)
 
@@ -1404,8 +1266,8 @@ def process_callbacks(call):
         m2.row(pbtn(" Ana Merkeze Dön", "nav_main", emoji_id="5253997076169115797", style="danger"))
 
         if kalan <= 0:
-            txt = (f" <b>Puan Transfer</b>\n\n"
-                   f"<tg-emoji emoji-id=\"5981091707456851997\">⏳</tg-emoji> Bugünkü 2 transfer hakkınızı kullandınız!\n"
+            txt = (f"<b>Puan Transfer</b>\n\n"
+                   f"⏳ Bugünkü 2 transfer hakkınızı kullandınız!\n"
                    f"Yarın tekrar kullanabilirsiniz.")
             try: bot.edit_message_text(txt, chat_id, call.message.message_id, reply_markup=m2)
             except: bot.send_message(chat_id, txt, reply_markup=m2)
@@ -1413,11 +1275,11 @@ def process_callbacks(call):
             return
 
         m2.row(pbtn(f" Transfer Yap ({kalan} hak kaldı)", "nav_transfer_do", emoji_id="5780834596673296534", style="success"))
-        txt = (f"<tg-emoji emoji-id=\"6267068789146260253\">💰</tg-emoji> <b>Puan Transfer Sistemi</b>\n\n"
-               f"<tg-emoji emoji-id=\"5251562950698759162\">💎</tg-emoji> <b>Bakiyeniz:</b> {u.get('balance', 0)} Puan\n"
-               f"<tg-emoji emoji-id=\"5981091707456851997\">⏳</tg-emoji> <b>Günlük Hak:</b> {kalan}/{MAX_TRANSFER} kaldı\n\n"
-               f"<tg-emoji emoji-id=\"5271725159273752548\">1️⃣</tg-emoji> Her transferde bot <b>1 Puan komisyon</b> keser.\n"
-               f"<tg-emoji emoji-id=\"6032994772321309200\">👤</tg-emoji> Alıcı ID ve miktarı girerek transfer yapın.")
+        txt = (f"<b>Puan Transfer Sistemi</b>\n\n"
+               f"<b>Bakiyeniz:</b> {u.get('balance', 0)} Puan\n"
+               f"<b>Günlük Hak:</b> {kalan}/{MAX_TRANSFER} kaldı\n\n"
+               f"Her transferde bot <b>1 Puan komisyon</b> keser.\n"
+               f"Alıcı ID ve miktarı girerek transfer yapın.")
         try: bot.edit_message_text(txt, chat_id, call.message.message_id, reply_markup=m2)
         except: bot.send_message(chat_id, txt, reply_markup=m2)
         bot.answer_callback_query(call.id)
@@ -1431,22 +1293,14 @@ def process_callbacks(call):
             bot.answer_callback_query(call.id, "⏳ Bugünkü transfer hakkınız doldu!", show_alert=True)
             return
         msg = bot.send_message(chat_id,
-            f"<tg-emoji emoji-id=\"6267068789146260253\">💰</tg-emoji> <b>Transfer Bilgisi Girin</b>\n\n"
+            f"<b>Transfer Bilgisi Girin</b>\n\n"
             f"Format: <code>AlıcıID|Miktar</code>\nÖrn: <code>1234567|10</code>\n\n"
-            f"<tg-emoji emoji-id=\"5271801931814165886\">⚠️</tg-emoji> Bot <b>1 Puan komisyon</b> keser.\n"
-            f"<tg-emoji emoji-id=\"5251562950698759162\">💎</tg-emoji> Bakiyeniz: {u.get('balance', 0)} Puan\n\n"
+            f"⚠️ Bot <b>1 Puan komisyon</b> keser.\n"
+            f"Bakiyeniz: {u.get('balance', 0)} Puan\n\n"
             f"<i>İptal: /iptal</i>")
         bot.register_next_step_handler(msg, transfer_step, uid)
         bot.answer_callback_query(call.id)
 
-    elif call.data == "nav_leaderboard":
-        sorted_users = sorted(db["users"].items(), key=lambda x: x[1]['balance'], reverse=True)[:10]
-        txt = "<tg-emoji emoji-id=\"5893376775781617954\">🏆</tg-emoji> <b>Elit Liderler Tablosu (Top 10)</b>\n\n"
-        for i, (user_id, data) in enumerate(sorted_users, 1):
-            medal = "<tg-emoji emoji-id=\"6123126147086556656\">🥇</tg-emoji>" if i == 1 else "<tg-emoji emoji-id=\"5251227187335424668\">🥈</tg-emoji>" if i == 2 else "<tg-emoji emoji-id=\"5251282841521647446\">🥉</tg-emoji>" if i == 3 else "🔸"
-            txt += f"{medal} ID: {user_id} | <tg-emoji emoji-id=\"5251562950698759162\">💎</tg-emoji> {data['balance']} | <tg-emoji emoji-id=\"6034834452843074121\">🤝</tg-emoji> {data['refs']} Davet\n"
-        bot.edit_message_text(txt, call.message.chat.id, call.message.message_id, reply_markup=types.InlineKeyboardMarkup().add(types.InlineKeyboardButton(" Ana Merkeze Dön", callback_data="nav_main")))
-        
     elif int(uid) in ADMIN_IDS and call.data.startswith("adm_"):
         handle_admin_callbacks(call)
 
@@ -1455,7 +1309,7 @@ def process_callbacks(call):
         db["users"][uid]["language"] = lang
         save_database(db)
         kb, txts = get_main_keyboard(uid)
-        bot.edit_message_text(f"<tg-emoji emoji-id=\"5350572310627632617\">✅</tg-emoji> Dil güncellendi.\n\n{txts['welcome']}", call.message.chat.id, call.message.message_id, reply_markup=kb)
+        bot.edit_message_text(f"✅ Dil güncellendi.\n\n{txts['welcome']}", call.message.chat.id, call.message.message_id, reply_markup=kb)
 
 
 # ============================================================
@@ -1478,8 +1332,8 @@ def handle_admin_callbacks(call):
         
         if not aktif:
             kb = InlineKeyboardMarkup()
-            kb.row(pbtn(" Yenile", "adm_active_orders", emoji_id="6325541629260206557"),
-                   pbtn(" Panel", "adm_dashboard", emoji_id="5253997076169115797"))
+            kb.row(pbtn(" Yenile", "adm_active_orders", emoji_id="6325541629260206557", style="primary"),
+                   pbtn(" Panel", "adm_dashboard", emoji_id="5253997076169115797", style="primary"))
             try:
                 bot.edit_message_text("📋 <b>Aktif Siparişler</b>\n\n✅ Şu an bekleyen sipariş yok.", call.message.chat.id, call.message.message_id, reply_markup=kb)
             except:
@@ -1488,20 +1342,15 @@ def handle_admin_callbacks(call):
             return
         
         kb = InlineKeyboardMarkup()
-        _durum_emoji_id = {
-            "alindi":  "5778479949572738874",
-            "islemde": "5956229471585441542",
-            "teslim":  "6041720006973067267",
-            "iptal":   "5314504236132747481"
-        }
         for u_id, oid, odata in aktif[-20:]:
             d = odata.get("durum", "alindi")
             btn_txt = f"#{oid} — {odata.get('urun','?')[:20]}"
-            kb.row(pbtn(btn_txt, f"adm_order_{u_id}_{oid}", emoji_id=_durum_emoji_id.get(d, "5778479949572738874"), style="primary"))
+            style = "success" if d == "islemde" else "primary"
+            kb.row(pbtn(btn_txt, f"adm_order_{u_id}_{oid}", style=style))
         
         kb.row(
-            pbtn("Yenile", "adm_active_orders", emoji_id="6325541629260206557"),
-            pbtn("Panel",  "adm_dashboard",     emoji_id="5253997076169115797")
+            pbtn("Yenile", "adm_active_orders", style="primary"),
+            pbtn("Panel",  "adm_dashboard",     style="primary")
         )
         
         txt = f"📋 <b>Aktif Siparişler</b> ({len(aktif)} adet)\n\n🟡 Alındı  🔵 İşlemde\n\nBir siparişe tıklayarak işlem yapın:"
@@ -1525,23 +1374,23 @@ def handle_admin_callbacks(call):
         durum_yazi = {"alindi": "🟡 Alındı", "islemde": "🔵 İşlemde", "teslim": "✅ Teslim", "iptal": "❌ İptal"}
         urun_key = odata.get("urun_key", "")
         
-        txt = (f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>Sipariş Detayı (Admin)</b>\n\n"
-               f"<tg-emoji emoji-id=\"6287264550005773857\">🔖</tg-emoji> Sipariş ID: <code>#{oid}</code>\n"
-               f"<tg-emoji emoji-id=\"6032994772321309200\">👤</tg-emoji> Kullanıcı ID: <code>{t_uid}</code>\n"
-               f"<tg-emoji emoji-id=\"5350699789551935589\">🛍</tg-emoji> Ürün: <b>{odata.get('urun','?')}</b>\n"
-               f"<tg-emoji emoji-id=\"6325717349257187998\">💎</tg-emoji> Fiyat: {odata.get('fiyat',0)} Puan\n"
-               f"<tg-emoji emoji-id=\"5028418466000930064\">📆</tg-emoji> Tarih: {odata.get('tarih','-')}\n"
-               f"<tg-emoji emoji-id=\"6129402906782207599\">📊</tg-emoji> Durum: <b>{durum_yazi.get(d, d)}</b>")
+        txt = (f"📦 <b>Sipariş Detayı (Admin)</b>\n\n"
+               f"🔖 Sipariş ID: <code>#{oid}</code>\n"
+               f"👤 Kullanıcı ID: <code>{t_uid}</code>\n"
+               f"🛍 Ürün: <b>{odata.get('urun','?')}</b>\n"
+               f"💎 Fiyat: {odata.get('fiyat',0)} Puan\n"
+               f"📆 Tarih: {odata.get('tarih','-')}\n"
+               f"📊 Durum: <b>{durum_yazi.get(d, d)}</b>")
         
         kb = InlineKeyboardMarkup()
         if d == "alindi":
-            kb.row(pbtn("İşleme Al", f"adm_setstat_{t_uid}_{oid}_islemde", emoji_id="5956229471585441542", style="primary"))
+            kb.row(pbtn("İşleme Al", f"adm_setstat_{t_uid}_{oid}_islemde", style="primary"))
         if d in ["alindi", "islemde"]:
             kb.row(
-                pbtn("Teslim Et", f"adm_deliver_{t_uid}_{oid}_{urun_key}", emoji_id="6041720006973067267", style="success"),
-                pbtn("İptal Et",  f"adm_cancel_{t_uid}_{oid}_{urun_key}",  emoji_id="5314504236132747481", style="danger")
+                pbtn("Teslim Et", f"adm_deliver_{t_uid}_{oid}_{urun_key}", style="success"),
+                pbtn("İptal Et",  f"adm_cancel_{t_uid}_{oid}_{urun_key}",  style="danger")
             )
-        kb.row(pbtn("Listeye Dön", "adm_active_orders", emoji_id="5253997076169115797", style="primary"))
+        kb.row(pbtn("Listeye Dön", "adm_active_orders", style="primary"))
         
         try:
             bot.edit_message_text(txt, call.message.chat.id, call.message.message_id, reply_markup=kb)
@@ -1559,11 +1408,11 @@ def handle_admin_callbacks(call):
             db["users"][t_uid]["orders"][oid]["durum"] = yeni_d
             save_database(db)
         
-        durum_mesaj = {"islemde": "<tg-emoji emoji-id=\"5415896658665808854\">🔵</tg-emoji> Siparişiniz işleme alındı!", "teslim": "<tg-emoji emoji-id=\"5415722549281561774\">🟢</tg-emoji> Siparişiniz teslim edildi!"}
-        try: bot.send_message(int(t_uid), f"{durum_mesaj.get(yeni_d,'<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> Siparişiniz güncellendi.')}\n<tg-emoji emoji-id=\"6287264550005773857\">🔖</tg-emoji> Sipariş ID: <code>#{oid}</code>")
+        durum_mesaj = {"islemde": "🔵 Siparişiniz işleme alındı!", "teslim": "🟢 Siparişiniz teslim edildi!"}
+        try: bot.send_message(int(t_uid), f"{durum_mesaj.get(yeni_d,'📦 Siparişiniz güncellendi.')}\nSipariş ID: <code>#{oid}</code>")
         except: pass
         
-        bot.answer_callback_query(call.id, f"<tg-emoji emoji-id=\"5415722549281561774\">🟢</tg-emoji> Durum güncellendi: {yeni_d}", show_alert=True)
+        bot.answer_callback_query(call.id, f"🟢 Durum güncellendi: {yeni_d}", show_alert=True)
         handle_admin_callbacks(type('obj', (object,), {'data': f'adm_order_{t_uid}_{oid}', 'message': call.message, 'from_user': call.from_user, 'id': call.id})())
 
     elif call.data.startswith("adm_deliver_"):
@@ -1577,9 +1426,9 @@ def handle_admin_callbacks(call):
         
         user_link = db.get("users", {}).get(t_uid, {}).get("orders", {}).get(oid, {}).get("link", "—")
         msg = bot.send_message(call.message.chat.id,
-            f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> <b>#{oid}</b> — <b>{item_name}</b>\n"
-            f"<tg-emoji emoji-id=\"5780406047416174369\">🔗</tg-emoji> Kullanıcı Linki: {user_link}\n\n"
-            f"<tg-emoji emoji-id=\"5465443379917629504\">🔓</tg-emoji> <b>Müşteriye gönderilecek TESLİMAT bilgisini yazın:</b>\n<i>(/iptal için /iptal)</i>")
+            f"📦 <b>#{oid}</b> — <b>{item_name}</b>\n"
+            f"🔗 Kullanıcı Linki: {user_link}\n\n"
+            f"<b>Müşteriye gönderilecek TESLİMAT bilgisini yazın:</b>\n<i>(/iptal için /iptal)</i>")
         original_text = call.message.text or ""
         bot.register_next_step_handler(msg, lambda m: admin_deliver_order_step(
             m, t_uid, item_name, call.message.message_id, call.message.chat.id, admin_name, original_text, oid))
@@ -1602,16 +1451,15 @@ def handle_admin_callbacks(call):
             save_database(db)
         
         try: bot.send_message(int(t_uid),
-            f"<tg-emoji emoji-id=\"5895410404141568046\">❎</tg-emoji> <b>Sipariş İptal Edildi!</b>\n<tg-emoji emoji-id=\"6287264550005773857\">🔖</tg-emoji> Sipariş ID: <code>#{oid}</code>\n"
-            f"<tg-emoji emoji-id=\"6325717349257187998\">💎</tg-emoji> <b>{cost} Puan</b> cüzdanınıza iade edildi.")
+            f"❎ <b>Sipariş İptal Edildi!</b>\nSipariş ID: <code>#{oid}</code>\nÜrün: <b>{item_name}</b>\n<b>{cost} Puan</b> cüzdanınıza iade edildi.")
         except: pass
         
-        bot.answer_callback_query(call.id, "<tg-emoji emoji-id=\"5895410404141568046\">❎</tg-emoji> Sipariş iptal edildi, puan iade edildi.", show_alert=True)
+        bot.answer_callback_query(call.id, "❎ Sipariş iptal edildi, puan iade edildi.", show_alert=True)
         fake_call = type('obj', (object,), {'data': 'adm_active_orders', 'message': call.message, 'from_user': call.from_user, 'id': call.id})()
         handle_admin_callbacks(fake_call)
     
     elif call.data == "adm_add_category":
-        msg = bot.send_message(call.message.chat.id, "📂 <b>Yeni Kategori Ekle</b>\nFormat: <code>kategori_kodu|<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> Kategori Adı</code>\nÖrn: <code>sosyal|📱 Sosyal Medya</code>\n\n⚠️ Kod boşluksuz, küçük harfle olmalı.")
+        msg = bot.send_message(call.message.chat.id, "📂 <b>Yeni Kategori Ekle</b>\nFormat: <code>kategori_kodu|Kategori Adı</code>\nÖrn: <code>sosyal|📱 Sosyal Medya</code>\n\n⚠️ Kod boşluksuz, küçük harfle olmalı.")
         bot.register_next_step_handler(msg, admin_add_category_step)
 
     elif call.data == "adm_del_category":
@@ -1672,7 +1520,7 @@ def handle_admin_callbacks(call):
             return
         cat_list_txt = "\n".join([f"  <code>{k}</code> → {(v['name'] if isinstance(v,dict) else v)}" for k,v in vip_cats.items()])
         msg = bot.send_message(call.message.chat.id,
-            f"<tg-emoji emoji-id=\"6005862519019673214\">👑</tg-emoji> <b>VIP Ürün Ekle</b>\n"
+            f"👑 <b>VIP Ürün Ekle</b>\n"
             f"Format: <code>kod|Ad|Fiyat|Stok|vip_kategori_kodu</code>\n"
             f"Örn: <code>vip_item1|VIP Paket|50|10|vip_genel</code>\n\n"
             f"<b>Mevcut VIP Kategoriler:</b>\n{cat_list_txt}")
@@ -1684,16 +1532,16 @@ def handle_admin_callbacks(call):
             bot.answer_callback_query(call.id, "⚠️ VIP mağazada ürün yok!", show_alert=True)
             return
         product_list = list(vip_products.items())
-        lines = [f"<code>{i+1}</code>. {d['name']} — <tg-emoji emoji-id=\"6325717349257187998\">💎</tg-emoji>{d['price']} Puan | 📦 Stok: {d.get('stock',0)}"
+        lines = [f"<code>{i+1}</code>. {d['name']} — 💎{d['price']} Puan | 📦 Stok: {d.get('stock',0)}"
                  for i,(pk,d) in enumerate(product_list)]
         msg = bot.send_message(call.message.chat.id,
-            "<tg-emoji emoji-id=\"6005862519019673214\">👑</tg-emoji> <b>VIP Ürün Sil</b>\n\n"
+            "👑 <b>VIP Ürün Sil</b>\n\n"
             "Silmek istediğiniz ürün numarasını veya <code>hepsi</code> yazın:\n\n" + "\n".join(lines))
         bot.register_next_step_handler(msg, admin_del_vip_product_step, product_list)
 
     elif call.data == "adm_add_vip_category":
         msg = bot.send_message(call.message.chat.id,
-            "<tg-emoji emoji-id=\"6005862519019673214\">👑</tg-emoji> <b>VIP Kategori Ekle</b>\n"
+            "👑 <b>VIP Kategori Ekle</b>\n"
             "Format: <code>kategori_kodu|👑 Kategori Adı</code>\n"
             "Örn: <code>vip_sosyal|👑 VIP Sosyal Medya</code>")
         bot.register_next_step_handler(msg, admin_add_vip_category_step)
@@ -1707,7 +1555,7 @@ def handle_admin_callbacks(call):
         lines = [f"<code>{i+1}</code>. {(v['name'] if isinstance(v,dict) else v)} <i>({k})</i>"
                  for i,(k,v) in enumerate(cat_list)]
         msg = bot.send_message(call.message.chat.id,
-            "<tg-emoji emoji-id=\"6005862519019673214\">👑</tg-emoji> <b>VIP Kategori Sil</b>\n\n"
+            "👑 <b>VIP Kategori Sil</b>\n\n"
             "Silmek istediğiniz kategorinin numarasını yazın:\n\n" + "\n".join(lines))
         bot.register_next_step_handler(msg, admin_del_vip_category_step, cat_list)
 
@@ -1819,20 +1667,21 @@ def handle_admin_callbacks(call):
             lines.append(txt)
         txt = "👑 <b>Mevcut Admin Listesi</b>\n\n" + "\n".join(lines)
         kb = InlineKeyboardMarkup()
-        kb.row(pbtn(" Panele Dön", "adm_dashboard", emoji_id="5253997076169115797"))
+        kb.row(pbtn(" Panele Dön", "adm_dashboard", style="primary"))
         try:
             bot.edit_message_text(txt, call.message.chat.id, call.message.message_id, reply_markup=kb)
         except:
             bot.send_message(call.message.chat.id, txt, reply_markup=kb)
         bot.answer_callback_query(call.id)
 
+
 def admin_ban_step(m, status):
     target = m.text.strip()
     if target in db["users"]:
         db["users"][target]["is_banned"] = status
         save_database(db)
-        bot.send_message(m.chat.id, f"<tg-emoji emoji-id=\"5350572310627632617\">✅</tg-emoji> Kullanıcı ({target}) Durumu Güncellendi: Banned={status}")
-    else: bot.send_message(m.chat.id, "<tg-emoji emoji-id=\"6221914376329237010\">⚠️</tg-emoji> Kullanıcı bulunamadı.")
+        bot.send_message(m.chat.id, f"✅ Kullanıcı ({target}) Durumu Güncellendi: Banned={status}")
+    else: bot.send_message(m.chat.id, "⚠️ Kullanıcı bulunamadı.")
 
 def admin_add_product_step(m):
     try:
@@ -1865,18 +1714,17 @@ def admin_add_product_step(m):
         cat_name = cat_raw["name"] if isinstance(cat_raw, dict) else cat_raw
         
         bot.send_message(m.chat.id,
-            f"<tg-emoji emoji-id=\"5415722549281561774\">🟢</tg-emoji> Ürün eklendi!\n"
+            f"🟢 Ürün eklendi!\n"
             f"<b>{name}</b>\n"
-            f"<tg-emoji emoji-id=\"6325717349257187998\">💎</tg-emoji> {price} Puan | 📦 Stok: {stock}\n"
-            f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> {cat_name}\n"
-            f"<tg-emoji emoji-id=\"5310039132297242441\">🎨</tg-emoji> Renk: {color} | Emoji ID: {emoji_id}"
+            f"💎 {price} Puan | 📦 Stok: {stock}\n"
+            f"📦 {cat_name}\n"
+            f"🎨 Renk: {color} | Emoji ID: {emoji_id}"
         )
     except Exception as e:
         bot.send_message(m.chat.id,
             f"❌ Hatalı format.\n<code>{e}</code>\n\n"
             "Format: <code>ANAHTAR|AD|FİYAT|STOK|KATEGORİ|EMOJİ_ID|RENK</code>\n"
-            "Örn: <code>tool1|Yeni Tool|15|50|tool_urunler|5188481279963715781|danger</code>\n\n"
-            "<i>EMOJİ_ID ve RENK opsiyonel (varsayılan: 5373251851074415873, primary)</i>"
+            "Örn: <code>tool1|Yeni Tool|15|50|tool_urunler|5188481279963715781|danger</code>"
         )
 
 def admin_add_category_step(m):
@@ -1909,7 +1757,7 @@ def admin_del_category_step(m, cat_list):
             if pdata.get("category") == key:
                 db["products"][pk]["category"] = "genel"
         save_database(db)
-        bot.send_message(m.chat.id, f"✅ <b>{cat_name}</b> kategorisi silindi.\n⚠️ Bu kategorideki ürünler <b>Genel</b>'e taşındı.")
+        bot.send_message(m.chat.id, f"✅ <b>{cat_name}</b> kategorisi silindi.")
     except ValueError:
         bot.send_message(m.chat.id, "❌ Lütfen sadece bir numara girin.")
 
@@ -1925,7 +1773,7 @@ def admin_del_all_products_step(m, product_list):
         numaralar = [int(x.strip()) for x in text.split(",")]
         gecersiz = [n for n in numaralar if n < 1 or n > len(product_list)]
         if gecersiz:
-            bot.send_message(m.chat.id, f"❌ Geçersiz numara: {gecersiz}. Lütfen 1 ile {len(product_list)} arasında girin.")
+            bot.send_message(m.chat.id, f"❌ Geçersiz numara: {gecersiz}.")
             return
         silinenler = []
         for n in sorted(set(numaralar)):
@@ -1942,17 +1790,17 @@ def admin_del_product_step(m, product_list):
     try:
         idx = int(m.text.strip()) - 1
         if idx < 0 or idx >= len(product_list):
-            bot.send_message(m.chat.id, f"❌ Geçersiz numara. Lütfen 1 ile {len(product_list)} arasında bir sayı girin.")
+            bot.send_message(m.chat.id, f"❌ Geçersiz numara.")
             return
         pk, data = product_list[idx]
         if pk in db.get("products", {}):
             del db["products"][pk]
             save_database(db)
-            bot.send_message(m.chat.id, f"✅ <b>#{idx+1} — {data['name']}</b> ürünü mağazadan başarıyla silindi.")
+            bot.send_message(m.chat.id, f"✅ <b>#{idx+1} — {data['name']}</b> ürünü silindi.")
         else:
-            bot.send_message(m.chat.id, "❌ Ürün artık mevcut değil, silinmiş olabilir.")
+            bot.send_message(m.chat.id, "❌ Ürün artık mevcut değil.")
     except ValueError:
-        bot.send_message(m.chat.id, "❌ Lütfen sadece bir numara girin. (Örn: <code>3</code>)")
+        bot.send_message(m.chat.id, "❌ Lütfen sadece bir numara girin.")
 
 def admin_premium_step(m, status):
     target = m.text.strip()
@@ -1963,24 +1811,22 @@ def admin_premium_step(m, status):
         durum_txt = "VERİLDİ ✅" if status else "KALDIRILDI ❌"
         bot.send_message(m.chat.id,
             f"👑 <b>VIP {durum_txt}</b>\n"
-            f"👤 Kullanıcı ID: <code>{target}</code>\n\n"
-            f"{'✅ Avantajlar: Günde 2x Bonus | +2 Davet Puanı | VIP Mağaza' if status else '❌ VIP üyelik sonlandırıldı.'}")
+            f"👤 Kullanıcı ID: <code>{target}</code>")
         try:
             if status:
                 bot.send_message(int(target),
                     "👑 <b>Tebrikler! VIP üyeliğiniz aktif edildi!</b>\n\n"
-                    "'<tg-emoji emoji-id=\"6120625823285251747\">👍</tg-emoji>' <b>VIP Avantajlarınız:</b>\n"
-                    "'<tg-emoji emoji-id=\"6120625823285251747\">👍</tg-emoji>' Günde <b>2 kez</b> günlük bonus alabilirsiniz\n"
-                    "'<tg-emoji emoji-id=\"6120625823285251747\">👍</tg-emoji>' Her davet için <b>+2 Puan</b> kazanırsınız\n"
-                    "'<tg-emoji emoji-id=\"6120635817674149717\">👍</tg-emoji>' <b>VIP Mağaza</b>'ya erişim açıldı!\n\n"
-                    "<i>İyi kullanmalar! 🚀</i>")
+                    "<b>VIP Avantajlarınız:</b>\n"
+                    "• Günde <b>2 kez</b> günlük bonus alabilirsiniz\n"
+                    "• Her davet için <b>+2 Puan</b> kazanırsınız\n"
+                    "• <b>VIP Mağaza</b>'ya erişim açıldı!")
             else:
                 bot.send_message(int(target),
-                    " '<tg-emoji emoji-id=\"6120660741369369103\">👍</tg-emoji>'   <b>VIP üyeliğiniz sonlandırıldı.</b>\n"
+                    "<b>VIP üyeliğiniz sonlandırıldı.</b>\n"
                     "<i>Detaylı bilgi için yöneticiyle iletişime geçin.</i>")
         except: pass
     else:
-        bot.send_message(m.chat.id, "❌ Kullanıcı bulunamadı. ID'yi kontrol edin.")
+        bot.send_message(m.chat.id, "❌ Kullanıcı bulunamadı.")
 
 def admin_balance_step(m, mode):
     try:
@@ -1992,26 +1838,26 @@ def admin_balance_step(m, mode):
             save_database(db)
             yeni_bakiye = db["users"][target]["balance"]
             bot.send_message(m.chat.id, f"✅ İşlem Başarılı! {target} yeni bakiyesi: {yeni_bakiye}")
-            try: bot.send_message(int(target), f"<tg-emoji emoji-id=\"5251562950698759162\">💎</tg-emoji> Hesabınıza yönetim tarafından <b>{amt} puan</b> eklendi!" if mode == "add" else f"<tg-emoji emoji-id=\"4958534924278694938\">🗑</tg-emoji> Hesabınızdan yönetim tarafından <b>{amt} puan</b> silindi.")
+            try: bot.send_message(int(target), f"💎 Hesabınıza yönetim tarafından <b>{amt} puan</b> eklendi!" if mode == "add" else f"🗑 Hesabınızdan yönetim tarafından <b>{amt} puan</b> silindi.")
             except: pass
             if mode == "add":
-                notify_admins(f"💰 <b>BAKİYE YÜKLEMESİ YAPILDI</b>\n👤 Kullanıcı ID: <code>{target}</code>\n💎 Eklenen: <b>{amt} Puan</b>\n📊 Yeni Bakiye: <b>{yeni_bakiye} Puan</b>")
+                notify_admins(f"💰 <b>BAKİYE YÜKLEMESİ</b>\n👤 Kullanıcı ID: <code>{target}</code>\n💎 Eklenen: <b>{amt} Puan</b>")
         else: bot.send_message(m.chat.id, "❌ Kullanıcı bulunamadı.")
     except: bot.send_message(m.chat.id, "❌ Hatalı format.")
 
 def admin_broadcast_step(m):
     text = m.text
     threading.Thread(target=notify_everyone, args=(text,)).start()
-    bot.send_message(m.chat.id, "📢 Toplu duyuru işlemi arka planda başlatıldı!")
+    bot.send_message(m.chat.id, "📢 Toplu duyuru işlemi başlatıldı!")
 
 def admin_send_msg_step(m):
     try:
         target, msg_text = m.text.split("|", 1)
         target = target.strip()
-        bot.send_message(int(target), f"<tg-emoji emoji-id=\"5253742260054409879\">✉️</tg-emoji> <b>Yönetimden Gelen Mesaj:</b>\n\n{msg_text.strip()}", parse_mode="HTML")
-        bot.send_message(m.chat.id, f"✅ Mesaj <code>{target}</code> kullanıcısına başarıyla iletildi.")
+        bot.send_message(int(target), f"✉️ <b>Yönetimden Gelen Mesaj:</b>\n\n{msg_text.strip()}", parse_mode="HTML")
+        bot.send_message(m.chat.id, f"✅ Mesaj <code>{target}</code> kullanıcısına iletildi.")
     except Exception as e:
-        bot.send_message(m.chat.id, f"❌ Mesaj gönderilemedi.\n<code>{e}</code>\n\nFormat: <code>ID|Mesajınız</code>")
+        bot.send_message(m.chat.id, f"❌ Mesaj gönderilemedi.\n<code>{e}</code>")
 
 def admin_create_gift_step(m):
     try:
@@ -2029,7 +1875,7 @@ def admin_create_gift_step(m):
             raise ValueError("Kod boş olamaz")
         
         if kod in db.get("gift_codes", {}):
-            bot.send_message(m.chat.id, f"⚠️ <code>{kod}</code> kodu zaten mevcut! Farklı bir kod girin.")
+            bot.send_message(m.chat.id, f"⚠️ <code>{kod}</code> kodu zaten mevcut!")
             return
         
         bitis = None
@@ -2048,18 +1894,17 @@ def admin_create_gift_step(m):
         
         sure_txt = "Süresiz" if not bitis else f"{gun} gün {saat} saat" if gun > 0 else f"{saat} saat"
         bot.send_message(m.chat.id, 
-            f"<tg-emoji emoji-id=\"5418010521309815154\">🎫</tg-emoji> <b>Kupon Oluşturuldu!</b>\n\n"
-            f"<tg-emoji emoji-id=\"5307843983102204243\">🔑</tg-emoji> Kod: <code>{kod}</code>\n"
-            f"<tg-emoji emoji-id=\"6325717349257187998\">💎</tg-emoji> Değer: <b>{puan} Puan</b>\n"
-            f"<tg-emoji emoji-id=\"6032994772321309200\">👤</tg-emoji> Kullanım Limiti: <b>{limit} Kişi</b>\n"
-            f"<tg-emoji emoji-id=\"5981091707456851997\">⏳</tg-emoji> Geçerlilik: <b>{sure_txt}</b>"
+            f"🎫 <b>Kupon Oluşturuldu!</b>\n\n"
+            f"🔑 Kod: <code>{kod}</code>\n"
+            f"💎 Değer: <b>{puan} Puan</b>\n"
+            f"👤 Kullanım Limiti: <b>{limit} Kişi</b>\n"
+            f"⏳ Geçerlilik: <b>{sure_txt}</b>"
         )
     except Exception as e:
         bot.send_message(m.chat.id, 
             f"❌ Hatalı format.\n<code>{e}</code>\n\n"
             "Format: <code>KOD|PUAN|LİMİT|GÜN|SAAT</code>\n"
-            "Örn: <code>KAMPANYA25|50|100|7|0</code>\n"
-            "<i>(Gün ve saat 0 = süresiz)</i>"
+            "Örn: <code>KAMPANYA25|50|100|7|0</code>"
         )
 
 @bot.message_handler(content_types=['new_chat_members', 'text'])
@@ -2071,7 +1916,7 @@ def master_message_handler(m):
         uid = str(m.from_user.id)
         
         if db.get("bot_status", "active") != "active" and m.from_user.id not in ADMIN_IDS:
-            bot.send_message(m.chat.id, "<tg-emoji emoji-id=\"5440621591387980068\">🔜</tg-emoji> Sistem bakımda.")
+            bot.send_message(m.chat.id, "🔜 Sistem bakımda.")
             return
             
         uid = str(m.from_user.id)
@@ -2095,8 +1940,8 @@ def master_message_handler(m):
             if REQUIRED_CHANNELS and not is_member_of_channels(m.from_user.id):
                 bot.send_message(
                     chat_id, 
-                    "<tg-emoji emoji-id=\"6242353099193718277\">📣</tg-emoji> <b>Bota erişmek için aşağıdaki kanallara katılman gerekiyor!</b>\n"
-                    "Katıldıktan sonra <tg-emoji emoji-id=\"6325541629260206557\">🔄</tg-emoji> butonuna bas <tg-emoji emoji-id=\"6222198028854367391\">👇</tg-emoji>", 
+                    "📣 <b>Bota erişmek için aşağıdaki kanallara katılman gerekiyor!</b>\n"
+                    "Katıldıktan sonra 🔄 butonuna bas 👇", 
                     reply_markup=get_channel_join_keyboard()
                 )
                 return
@@ -2117,7 +1962,7 @@ def master_message_handler(m):
 
         else:
             if REQUIRED_CHANNELS and not is_member_of_channels(m.from_user.id):
-                bot.send_message(chat_id, "<tg-emoji emoji-id=\"5780405967527089720\">📢</tg-emoji> <b>Bota erişmek için aşağıdaki kanallara katılman gerekiyor!</b>", reply_markup=get_channel_join_keyboard())
+                bot.send_message(chat_id, "📢 <b>Bota erişmek için kanallara katılman gerekiyor!</b>", reply_markup=get_channel_join_keyboard())
                 return
 
             kb, txts = get_main_keyboard(uid)
@@ -2125,7 +1970,7 @@ def master_message_handler(m):
 
 def admin_deliver_order_step(m, target_uid, item_name, orig_msg_id, admin_chat_id, admin_name, original_text, order_id="?"):
     if m.text == "/iptal": 
-        bot.send_message(m.chat.id, "<tg-emoji emoji-id=\"6221914376329237010\">⚠️</tg-emoji> Teslimat iptal edildi.")
+        bot.send_message(m.chat.id, "⚠️ Teslimat iptal edildi.")
         return
     if target_uid in db["users"] and order_id in db["users"][target_uid].get("orders", {}):
         db["users"][target_uid]["orders"][order_id]["durum"] = "teslim"
@@ -2136,19 +1981,19 @@ def admin_deliver_order_step(m, target_uid, item_name, orig_msg_id, admin_chat_i
     except: pass
     try:
         bot.send_message(int(target_uid), 
-            f"<tg-emoji emoji-id=\"5251227707026470504\">🎁</tg-emoji> <b>Siparişiniz Teslim Edildi!</b>\n"
-            f"'<tg-emoji emoji-id=\"6120946172010959542\">👍</tg-emoji>' Sipariş ID: <code>#{order_id}</code>\n"
-            f"<tg-emoji emoji-id=\"5212947303467345789\">📦</tg-emoji> Ürün: {item_name}\n"
-            f"<tg-emoji emoji-id=\"5465443379917629504\">🔓</tg-emoji> <b>Teslimat Bilgisi:</b>\n<code>{m.text}</code>"
+            f"🎁 <b>Siparişiniz Teslim Edildi!</b>\n"
+            f"Sipariş ID: <code>#{order_id}</code>\n"
+            f"📦 Ürün: {item_name}\n"
+            f"🔓 <b>Teslimat Bilgisi:</b>\n<code>{m.text}</code>"
         )
     except: pass
 
 def send_refund_message_step(m, uid):
-    bot.send_message(m.chat.id, "<tg-emoji emoji-id=\"6028565819225542441\">✅</tg-emoji> İade talebiniz iletildi.")
+    bot.send_message(m.chat.id, "✅ İade talebiniz iletildi.")
     notify_admins(f"💳 <b>İADE TALEBİ!</b>\n👤 ID: <code>{uid}</code>\n📝 Mesaj: {m.text}")
 
 def send_support_message_step(m, uid):
-    bot.send_message(m.chat.id, "<tg-emoji emoji-id=\"6028565819225542441\">✅</tg-emoji> Mesajınız destek ekibine iletildi.")
+    bot.send_message(m.chat.id, "✅ Mesajınız destek ekibine iletildi.")
     notify_admins(f"🛎️ <b>DESTEK TALEBİ!</b>\n👤 ID: <code>{uid}</code>\n💬 Mesaj: {m.text}")
 
 def redeem_gift_code(m, uid):
@@ -2164,10 +2009,10 @@ def redeem_gift_code(m, uid):
             return
         
         if uid in coupon.get("used_by", []):
-            bot.send_message(m.chat.id, "<tg-emoji emoji-id=\"6221914376329237010\">⚠️</tg-emoji> Bu kuponu daha önce zaten kullandınız!")
+            bot.send_message(m.chat.id, "⚠️ Bu kuponu daha önce zaten kullandınız!")
             return
         if len(coupon.get("used_by", [])) >= coupon["limit"]:
-            bot.send_message(m.chat.id, "<tg-emoji emoji-id=\"6221914376329237010\">⚠️</tg-emoji> Bu kuponun kullanım limiti dolmuş!")
+            bot.send_message(m.chat.id, "⚠️ Bu kuponun kullanım limiti dolmuş!")
             return
         bonus = coupon["puan"]
         db["users"][uid]["balance"] += bonus
@@ -2175,22 +2020,22 @@ def redeem_gift_code(m, uid):
         if len(coupon["used_by"]) >= coupon["limit"]:
             del db["gift_codes"][code]
         save_database(db)
-        bot.send_message(m.chat.id, f"<tg-emoji emoji-id=\"5418010521309815154\">🎫</tg-emoji> <b>Kupon Başarılı!</b> Hesabınıza <b>+{bonus} Puan</b> 💎 eklendi.")
+        bot.send_message(m.chat.id, f"🎫 <b>Kupon Başarılı!</b> Hesabınıza <b>+{bonus} Puan</b> 💎 eklendi.")
     else: 
-        bot.send_message(m.chat.id, "<tg-emoji emoji-id=\"5348514879558926674\">👎</tg-emoji> Geçersiz, süresi dolmuş veya hatalı kupon kodu.")
+        bot.send_message(m.chat.id, "👎 Geçersiz, süresi dolmuş veya hatalı kupon kodu.")
 
 def admin_add_admin_step(m, owner_uid):
     try:
         parts = m.text.strip().split("|")
         if len(parts) < 2:
-            bot.send_message(m.chat.id, "❌ Format: <code>ID|SEVİYE</code>\nÖrn: <code>123456789|super_admin</code>")
+            bot.send_message(m.chat.id, "❌ Format: <code>ID|SEVİYE</code>")
             return
         
         new_admin_id = str(int(parts[0].strip()))
         level = parts[1].strip().lower()
         
         if level not in ["owner", "super_admin", "admin"]:
-            bot.send_message(m.chat.id, "❌ Geçersiz seviye! Kullan: owner, super_admin, admin")
+            bot.send_message(m.chat.id, "❌ Geçersiz seviye!")
             return
         
         if new_admin_id in ADMIN_LEVELS:
@@ -2203,11 +2048,10 @@ def admin_add_admin_step(m, owner_uid):
         emoji = "👑" if level == "owner" else "⭐" if level == "super_admin" else "🔧"
         bot.send_message(m.chat.id, 
             f"✅ <code>{new_admin_id}</code> eklendi!\n"
-            f"{emoji} <b>Seviye:</b> {level}\n\n"
-            f"⚠️ <b>Not:</b> Kalıcı yapmak için dosyada ADMIN_LEVELS'e ekleyin."
+            f"{emoji} <b>Seviye:</b> {level}"
         )
     except ValueError:
-        bot.send_message(m.chat.id, "❌ Geçersiz format! <code>ID|SEVİYE</code> yazın.")
+        bot.send_message(m.chat.id, "❌ Geçersiz format!")
 
 def admin_del_admin_step(m, owner_uid):
     try:
@@ -2215,30 +2059,27 @@ def admin_del_admin_step(m, owner_uid):
         admin_list = list(ADMIN_LEVELS.items())
         
         if idx < 0 or idx >= len(admin_list):
-            bot.send_message(m.chat.id, f"❌ Geçersiz numara. 1 ile {len(admin_list)} arasında girin.")
+            bot.send_message(m.chat.id, f"❌ Geçersiz numara.")
             return
         
         aid, level = admin_list[idx]
         
         if level == "owner":
-            bot.send_message(m.chat.id, "❌ Owner silinemez! Bu çok tehlikeli.")
+            bot.send_message(m.chat.id, "❌ Owner silinemez!")
             return
         
         del ADMIN_LEVELS[aid]
         if int(aid) in ADMIN_IDS:
             ADMIN_IDS.remove(int(aid))
         
-        bot.send_message(m.chat.id, 
-            f"✅ <code>{aid}</code> silindi.\n\n"
-            f"⚠️ <b>Not:</b> Dosyada ADMIN_LEVELS'den de silin."
-        )
+        bot.send_message(m.chat.id, f"✅ <code>{aid}</code> silindi.")
     except ValueError:
         bot.send_message(m.chat.id, "❌ Lütfen sadece bir numara girin.")
 
 
 def transfer_step(m, sender_uid):
     if m.text and m.text.strip().lower() == "/iptal":
-        bot.send_message(m.chat.id, "<tg-emoji emoji-id=\"6221914376329237010\">⚠️</tg-emoji> Transfer iptal edildi.")
+        bot.send_message(m.chat.id, "⚠️ Transfer iptal edildi.")
         return
     try:
         parts = m.text.strip().split("|")
@@ -2248,13 +2089,13 @@ def transfer_step(m, sender_uid):
         amount = int(parts[1].strip())
 
         if target_uid == sender_uid:
-            bot.send_message(m.chat.id, "<tg-emoji emoji-id=\"5314504236132747481\">❌</tg-emoji> Kendinize transfer yapamazsınız!")
+            bot.send_message(m.chat.id, "❌ Kendinize transfer yapamazsınız!")
             return
         if target_uid not in db.get("users", {}):
-            bot.send_message(m.chat.id, "<tg-emoji emoji-id=\"5314504236132747481\">❌</tg-emoji> Alıcı kullanıcı bulunamadı!")
+            bot.send_message(m.chat.id, "❌ Alıcı kullanıcı bulunamadı!")
             return
         if amount <= 0:
-            bot.send_message(m.chat.id, "<tg-emoji emoji-id=\"5314504236132747481\">❌</tg-emoji> Miktar 0'dan büyük olmalı!")
+            bot.send_message(m.chat.id, "❌ Miktar 0'dan büyük olmalı!")
             return
 
         COMMISSION = 1
@@ -2263,8 +2104,8 @@ def transfer_step(m, sender_uid):
 
         if sender_balance < total_needed:
             bot.send_message(m.chat.id,
-                f"<tg-emoji emoji-id=\"5348514879558926674\">👎</tg-emoji> <b>Yetersiz Bakiye!</b>\n"
-                f"Gerekli: <b>{total_needed} Puan</b> ({amount} + {COMMISSION} komisyon)\n"
+                f"👎 <b>Yetersiz Bakiye!</b>\n"
+                f"Gerekli: <b>{total_needed} Puan</b>\n"
                 f"Bakiyeniz: <b>{sender_balance} Puan</b>")
             return
 
@@ -2272,7 +2113,7 @@ def transfer_step(m, sender_uid):
         t_date = db["users"][sender_uid].get("last_transfer_date", "")
         t_count = db["users"][sender_uid].get("daily_transfer_count", 0) if t_date == today else 0
         if t_count >= 2:
-            bot.send_message(m.chat.id, "<tg-emoji emoji-id=\"5981091707456851997\">⏳</tg-emoji> Bugünkü 2 transfer hakkınızı kullandınız!")
+            bot.send_message(m.chat.id, "⏳ Bugünkü 2 transfer hakkınızı kullandınız!")
             return
 
         db["users"][sender_uid]["balance"] -= total_needed
@@ -2288,28 +2129,28 @@ def transfer_step(m, sender_uid):
 
         kalan = 2 - db["users"][sender_uid]["daily_transfer_count"]
         bot.send_message(m.chat.id,
-            f"<tg-emoji emoji-id=\"5350572310627632617\">✅</tg-emoji> <b>Transfer Başarılı!</b>\n\n"
-            f"<tg-emoji emoji-id=\"6032994772321309200\">👤</tg-emoji> <b>Alıcı ID:</b> <code>{target_uid}</code>\n"
-            f"<tg-emoji emoji-id=\"6267068789146260253\">💰</tg-emoji> <b>Gönderilen:</b> {amount} Puan\n"
-            f"<tg-emoji emoji-id=\"5251562950698759162\">💎</tg-emoji> <b>Komisyon:</b> {COMMISSION} Puan\n"
-            f"<tg-emoji emoji-id=\"5215420556089776398\">📊</tg-emoji> <b>Yeni Bakiyeniz:</b> {db['users'][sender_uid]['balance']} Puan\n\n"
-            f"<tg-emoji emoji-id=\"5981091707456851997\">⏳</tg-emoji> Bugün için <b>{kalan} transfer hakkınız</b> kaldı."
+            f"✅ <b>Transfer Başarılı!</b>\n\n"
+            f"👤 <b>Alıcı ID:</b> <code>{target_uid}</code>\n"
+            f"💰 <b>Gönderilen:</b> {amount} Puan\n"
+            f"💎 <b>Komisyon:</b> {COMMISSION} Puan\n"
+            f"📊 <b>Yeni Bakiyeniz:</b> {db['users'][sender_uid]['balance']} Puan\n\n"
+            f"⏳ Bugün için <b>{kalan} transfer hakkınız</b> kaldı."
         )
         try:
             bot.send_message(int(target_uid),
-                f"<tg-emoji emoji-id=\"6267068789146260253\">💰</tg-emoji> <b>Puan Transferi Aldınız!</b>\n\n"
-                f"<tg-emoji emoji-id=\"5780834596673296534\">➕</tg-emoji> <b>+{amount} Puan</b> hesabınıza eklendi!\n"
-                f"<tg-emoji emoji-id=\"6032994772321309200\">👤</tg-emoji> <b>Gönderen:</b> <code>{sender_uid}</code>\n"
-                f"<tg-emoji emoji-id=\"5251562950698759162\">💎</tg-emoji> <b>Yeni Bakiyeniz:</b> {db['users'][target_uid]['balance']} Puan"
+                f"💰 <b>Puan Transferi Aldınız!</b>\n\n"
+                f"➕ <b>+{amount} Puan</b> hesabınıza eklendi!\n"
+                f"👤 <b>Gönderen:</b> <code>{sender_uid}</code>\n"
+                f"💎 <b>Yeni Bakiyeniz:</b> {db['users'][target_uid]['balance']} Puan"
             )
         except: pass
 
     except ValueError:
         bot.send_message(m.chat.id,
-            "<tg-emoji emoji-id=\"5314504236132747481\">❌</tg-emoji> Hatalı format!\n"
-            "Doğru format: <code>AlıcıID|Miktar</code>\nÖrn: <code>1234567|10</code>")
+            "❌ Hatalı format!\n"
+            "Doğru format: <code>AlıcıID|Miktar</code>")
     except Exception as e:
-        bot.send_message(m.chat.id, f"<tg-emoji emoji-id=\"5314504236132747481\">❌</tg-emoji> Hata: <code>{e}</code>")
+        bot.send_message(m.chat.id, f"❌ Hata: <code>{e}</code>")
 
 
 def admin_add_vip_product_step(m):
@@ -2323,7 +2164,7 @@ def admin_add_vip_product_step(m):
         color = parts[6] if len(parts) > 6 else "danger"
 
         if category not in db.get("vip_categories", {}):
-            bot.send_message(m.chat.id, f"<tg-emoji emoji-id=\"5314504236132747481\">❌</tg-emoji> VIP kategori bulunamadı: <code>{category}</code>\nÖnce VIP Kategori Ekle!")
+            bot.send_message(m.chat.id, f"❌ VIP kategori bulunamadı: <code>{category}</code>")
             return
 
         db.setdefault("vip_products", {})[pk] = {
@@ -2334,13 +2175,12 @@ def admin_add_vip_product_step(m):
         cat_raw = db["vip_categories"][category]
         cat_name = cat_raw["name"] if isinstance(cat_raw, dict) else cat_raw
         bot.send_message(m.chat.id,
-            f"<tg-emoji emoji-id=\"6005862519019673214\">👑</tg-emoji> <b>VIP Ürün Eklendi!</b>\n"
-            f"<b>{name}</b> | <tg-emoji emoji-id=\"6325717349257187998\">💎</tg-emoji> {price} Puan | <tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> Stok: {stock}\n"
-            f"<tg-emoji emoji-id=\"5854908544712707500\">📦</tg-emoji> Kategori: {cat_name}")
+            f"👑 <b>VIP Ürün Eklendi!</b>\n"
+            f"<b>{name}</b> | 💎 {price} Puan | 📦 Stok: {stock}\n"
+            f"📦 Kategori: {cat_name}")
     except Exception as e:
         bot.send_message(m.chat.id,
-            f"<tg-emoji emoji-id=\"5314504236132747481\">❌</tg-emoji> Hatalı format: <code>{e}</code>\n"
-            "Format: <code>kod|Ad|Fiyat|Stok|vip_kategori|emoji_id|renk</code>")
+            f"❌ Hatalı format: <code>{e}</code>")
 
 def admin_del_vip_product_step(m, product_list):
     try:
@@ -2348,21 +2188,19 @@ def admin_del_vip_product_step(m, product_list):
         if text == "hepsi":
             db["vip_products"] = {}
             save_database(db)
-            bot.send_message(m.chat.id, "<tg-emoji emoji-id=\"5350572310627632617\">✅</tg-emoji> Tüm VIP ürünler silindi.")
+            bot.send_message(m.chat.id, "✅ Tüm VIP ürünler silindi.")
             return
         idx = int(text) - 1
         if idx < 0 or idx >= len(product_list):
-            bot.send_message(m.chat.id, f"<tg-emoji emoji-id=\"5314504236132747481\">❌</tg-emoji> Geçersiz numara!")
+            bot.send_message(m.chat.id, "❌ Geçersiz numara!")
             return
         pk, data = product_list[idx]
         if pk in db.get("vip_products", {}):
             del db["vip_products"][pk]
             save_database(db)
-            bot.send_message(m.chat.id, f"<tg-emoji emoji-id=\"5350572310627632617\">✅</tg-emoji> <b>{data['name']}</b> VIP mağazadan silindi.")
-        else:
-            bot.send_message(m.chat.id, "<tg-emoji emoji-id=\"5314504236132747481\">❌</tg-emoji> Ürün bulunamadı.")
+            bot.send_message(m.chat.id, f"✅ <b>{data['name']}</b> VIP mağazadan silindi.")
     except ValueError:
-        bot.send_message(m.chat.id, "<tg-emoji emoji-id=\"5314504236132747481\">❌</tg-emoji> Lütfen bir numara veya 'hepsi' girin.")
+        bot.send_message(m.chat.id, "❌ Lütfen bir numara veya 'hepsi' girin.")
 
 def admin_add_vip_category_step(m):
     try:
@@ -2370,19 +2208,19 @@ def admin_add_vip_category_step(m):
         key = parts[0].strip().lower().replace(" ", "_")
         name = parts[1].strip() if len(parts) >= 2 else key
         if key in db.get("vip_categories", {}):
-            bot.send_message(m.chat.id, f"<tg-emoji emoji-id=\"6221914376329237010\">⚠️</tg-emoji> <code>{key}</code> VIP kategorisi zaten var!")
+            bot.send_message(m.chat.id, f"⚠️ <code>{key}</code> VIP kategorisi zaten var!")
             return
         db.setdefault("vip_categories", {})[key] = {"name": name, "emoji_id": "6005862519019673214", "color": "danger"}
         save_database(db)
-        bot.send_message(m.chat.id, f"<tg-emoji emoji-id=\"6005862519019673214\">👑</tg-emoji> VIP Kategori eklendi: <b>{name}</b> <code>({key})</code>")
+        bot.send_message(m.chat.id, f"👑 VIP Kategori eklendi: <b>{name}</b> <code>({key})</code>")
     except:
-        bot.send_message(m.chat.id, "<tg-emoji emoji-id=\"5314504236132747481\">❌</tg-emoji> Hatalı format. Örn: <code>vip_sosyal|👑 VIP Sosyal Medya</code>")
+        bot.send_message(m.chat.id, "❌ Hatalı format.")
 
 def admin_del_vip_category_step(m, cat_list):
     try:
         idx = int(m.text.strip()) - 1
         if idx < 0 or idx >= len(cat_list):
-            bot.send_message(m.chat.id, f"<tg-emoji emoji-id=\"5314504236132747481\">❌</tg-emoji> Geçersiz numara!")
+            bot.send_message(m.chat.id, "❌ Geçersiz numara!")
             return
         key, cat_data = cat_list[idx]
         cat_name = cat_data["name"] if isinstance(cat_data, dict) else cat_data
@@ -2391,13 +2229,13 @@ def admin_del_vip_category_step(m, cat_list):
             if pdata.get("category") == key:
                 db["vip_products"][pk]["category"] = "vip_genel"
         save_database(db)
-        bot.send_message(m.chat.id, f"<tg-emoji emoji-id=\"5350572310627632617\">✅</tg-emoji> VIP Kategori <b>{cat_name}</b> silindi.")
+        bot.send_message(m.chat.id, f"✅ VIP Kategori <b>{cat_name}</b> silindi.")
     except ValueError:
-        bot.send_message(m.chat.id, "<tg-emoji emoji-id=\"5314504236132747481\">❌</tg-emoji> Lütfen bir numara girin.")
+        bot.send_message(m.chat.id, "❌ Lütfen bir numara girin.")
 
 
 # ============================================================
-# 🌐 FASTAPI WEB SUNUCUSU (RENDER 7/24 AKTİF TUTMA)
+# 🌐 FASTAPI WEB SUNUCUSU
 # ============================================================
 
 app = FastAPI(title="VANTORIUM Telegram Bot API")
@@ -2419,7 +2257,6 @@ def health():
 
 @app.post("/webhook")
 async def telegram_webhook(request: Request):
-    """İsteğe bağlı webhook endpoint (ileride kullanılabilir)."""
     try:
         data = await request.json()
         update = telebot.types.Update.de_json(data)
