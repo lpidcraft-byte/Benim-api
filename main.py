@@ -16,7 +16,7 @@ import uvicorn
 # ⚙️ GENEL YAPILANDIRMA (CONFIG)
 # ============================================================
 
-BOT_TOKEN = "8981649809:AAEiL9R-bTpbJpPdLSt1vNUAWXPmUzy4b7o"
+BOT_TOKEN = "8935278587:AAFfwr3wg73ln55fIiBmgWxLiDhhvUn1xvw"
 
 # 👑 OWNER ID (Ana Admin - Silinemez)
 OWNER_ID = 8913966694 
