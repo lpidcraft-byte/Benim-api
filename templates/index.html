@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>VANTORIUM — Görsel Üretici</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: radial-gradient(circle at top, #1a0f00, #000);
+    color: #f5e6c8;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 40px 16px;
+  }
+  .wrap { max-width: 760px; width: 100%; }
+  h1 {
+    font-size: 42px;
+    text-align: center;
+    letter-spacing: 6px;
+    background: linear-gradient(90deg, #ff6a00, #ffcc00, #ff6a00);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 30px rgba(255,106,0,.4);
+    margin-bottom: 6px;
+  }
+  .sub {
+    text-align: center;
+    color: #ffb347;
+    opacity: .7;
+    font-size: 13px;
+    letter-spacing: 3px;
+    margin-bottom: 32px;
+  }
+  textarea, input[type=text], select {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border: 1px solid #3a2a10;
+    background: #120c02;
+    color: #f5e6c8;
+    font-size: 15px;
+    outline: none;
+    transition: border .2s;
+  }
+  textarea:focus, input:focus, select:focus { border-color: #ff6a00; }
+  textarea { resize: vertical; min-height: 110px; }
+  .row { display: flex; gap: 10px; margin-top: 12px; }
+  .row > * { flex: 1; }
+  button {
+    width: 100%;
+    margin-top: 20px;
+    padding: 16px;
+    border-radius: 10px;
+    border: none;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    background: linear-gradient(90deg, #ff6a00, #ffcc00);
+    color: #1a0f00;
+    cursor: pointer;
+    transition: transform .1s, box-shadow .2s;
+  }
+  button:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(255,106,0,.4); }
+  button:disabled { opacity: .5; cursor: wait; }
+  .status { margin-top: 16px; text-align: center; font-size: 14px; color: #ffb347; min-height: 20px; }
+  .result { margin-top: 24px; text-align: center; }
+  .result img {
+    max-width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 0 40px rgba(255,106,0,.25);
+  }
+  .result a {
+    display: inline-block;
+    margin-top: 14px;
+    padding: 12px 22px;
+    background: #120c02;
+    border: 1px solid #ff6a00;
+    color: #ffcc00;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+  .result a:hover { background: #ff6a00; color: #000; }
+  .err { color: #ff5555; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>VANTORIUM</h1>
+  <p class="sub">AI GÖRSEL ÜRETİCİ · BY VANTORIUM TEAM</p>
+
+  <textarea id="prompt" placeholder="Hayal ettiğin görseli anlat... (kısıtlama yok)"></textarea>
+
+  <div class="row">
+    <input type="text" id="seed" placeholder="Seed (boş = rastgele)">
+    <select id="steps">
+      <option value="25">25 adım (hızlı)</option>
+      <option value="30" selected>30 adım (dengeli)</option>
+      <option value="40">40 adım (detaylı)</option>
+    </select>
+  </div>
+
+  <button id="gen">ÜRET</button>
+  <div class="status" id="status"></div>
+
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+const btn = document.getElementById('gen');
+const status = document.getElementById('status');
+const result = document.getElementById('result');
+
+btn.addEventListener('click', async () => {
+  const prompt = document.getElementById('prompt').value.trim();
+  if (!prompt) { status.textContent = 'İstem boş olamaz.'; return; }
+
+  const seedVal = document.getElementById('seed').value.trim();
+  status.textContent = 'Model çalışıyor... Lütfen bekleyin.';
+  status.classList.remove('err');
+  result.innerHTML = '';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt,
+        steps: parseInt(document.getElementById('steps').value),
+        seed: seedVal ? parseInt(seedVal) : null
+      })
+    });
+
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      throw new Error(j.error || 'Sunucu hatası');
+    }
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+
+    status.textContent = 'Hazır ✓';
+    result.innerHTML = `
+      <img src="${url}" alt="üretilen görsel">
+      <br>
+      <a href="${url}" download="vantorium.png">PNG İNDİR</a>
+    `;
+  } catch (e) {
+    status.textContent = 'Hata: ' + e.message;
+    status.classList.add('err');
+  } finally {
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
